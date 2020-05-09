@@ -1,0 +1,8 @@
+Frameworks 
+- Node.js
+- Socket.io
+
+Features
+- Narrator feature 
+- Voting per round 
+- Auto detection of if Mafias win
