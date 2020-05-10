@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <title>MAFIA</title>
+  <link rel="stylesheet" type="text/css" href="styles/style.css">
+</head>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+  $(function () {
+    var socket = io();
+    $('form').submit(function(e){
+      e.preventDefault(); // prevents page reloading
+      socket.emit('chat message', $('#m').val()); //when a user sends a message, send it to server as 'chat message' event
+      $('#m').val('');
+      return false;
+    });
+    socket.on('chat message', function(msg){
+      $('#messages').append($('<li>').text(msg));
+    });
+  });
+</script>
+
+<body>
+<div id="chatbox">
+  <ul id="messages"></ul>
+  <form class="chat_input" action="">
+    <input id="m" autocomplete="off" />
+  </form>
+</div>
+
+</body>
+</html>

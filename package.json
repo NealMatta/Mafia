@@ -1,0 +1,9 @@
+{
+  "name": "mafia-game",
+  "version": "0.0.1",
+  "description": "online multiplayer mafia game by nm and ak",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}
