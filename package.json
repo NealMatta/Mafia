@@ -1,9 +1,23 @@
 {
-  "name": "mafia-game",
-  "version": "0.0.1",
-  "description": "online multiplayer mafia game by nm and ak",
-  "dependencies": {
-    "express": "^4.17.1",
-    "socket.io": "^2.3.0"
-  }
+	"name": "mafia-game",
+	"version": "0.0.1",
+	"description": "online multiplayer mafia game by nm and ak",
+	"scripts": {
+		"watch": "npm run watch-code & npm run watch-css",
+		"watch-code": "nodemon index.js",
+		"watch-css": "node-sass -w styles/scss -o styles/css",
+		"build": "npm build",
+		"clean": "rm -rf node_modules",
+		"reinstall": "npm run clean && npm install",
+		"rebuild": "npm run clean && npm install && npm run build"
+	},
+	"dependencies": {
+		"express": "^4.17.1",
+		"node-sass": "^4.14.1",
+		"socket.io": "^2.3.0"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.3",
+		"sass": "^1.26.5"
+	}
 }
