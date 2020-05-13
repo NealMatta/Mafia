@@ -1,20 +1,20 @@
 body {
-	background-color: #757575
+	background-color: #757575;
 }
 
 #chatbox {
 	background-color: #a3a3a3;
 	width: 25%;
-	height:90%;
-	left:5%;
-	top:5%;
-	position:fixed;
+	height: 90%;
+	left: 5%;
+	top: 5%;
+	position: fixed;
 	border: 2px black solid;
 }
 
 #messages {
 	width: 100%;
-	position:relative;
+	position: relative;
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
@@ -33,17 +33,17 @@ body {
 	width: 100%;
 	outline: 2px black solid;
 	outline-offset: -2px;
-	height:40px;
+	height: 40px;
 }
- 
+
 .chat_input input {
 	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;         /* Opera/IE 8+; border-box keeps box size from increasing due to padding*/
-	font-size:18px;
-	border:0;
+	-moz-box-sizing: border-box; /* Firefox, other Gecko */
+	box-sizing: border-box; /* Opera/IE 8+; border-box keeps box size from increasing due to padding*/
+	font-size: 18px;
+	border: 0;
 	height: 100%;
-	width:100%;
+	width: 100%;
 	padding-left: 5px;
 	padding-right: -5px;
 }
