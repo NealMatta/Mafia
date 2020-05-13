@@ -1,4 +1,4 @@
-class Game {
+export class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
 		this.players = players;
@@ -65,7 +65,6 @@ function randomNumBetween(min, max) {
 const numSheriff = 1;
 const numDoctors = 1;
 const numMafia = 2;
-const numVillagers = 4;
 
 const players = {
 	u_1: new PlayerInfo('user_1'),
@@ -79,7 +78,14 @@ const players = {
 };
 
 let game = new Game(players, numSheriff, numDoctors, numMafia);
-game.getPlayers();
+
+var ul = document.getElementById('players');
+var li = document.createElement('li');
+console.log(ul);
+li.appendChild(document.createTextNode('Fourt'));
+li.setAttribute('id', 'element4'); // added line
+ul.appendChild(li);
+alert(li.id);
 
 /* Game Class
 General
