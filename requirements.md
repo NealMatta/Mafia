@@ -2,6 +2,8 @@
 
 -   Node.js
 -   Socket.io
+-   Express.js
+-   express-session.js
 
 ### Core Features
 
@@ -9,7 +11,7 @@
     -   Selecting how many mafia, how many people, etc.
 -   God feature
     -   What exactly is going on
-    -   Whos turn is it?
+    -   Whose turn is it?
 -   Socket
 -   Voting per round
 -   Auto detection of if Mafias win

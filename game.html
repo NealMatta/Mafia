@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>MAFIA</title>
+		<link rel="stylesheet" type="text/css" href="styles/style.css" />
+	</head>
+
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script>
+		$(function() {
+			var socket = io('/game');
+			var room = "";
+			$("#chat_input").submit(function(e) {
+				e.preventDefault(); // prevents page reloading
+				socket.emit("chat message", [room, $("#m").val()]); //when a user sends a message, send it to server as 'chat message' event
+				$("#m").val("");
+				return false;
+			});
+			socket.on("new chat", function(msg) {
+				$("#messages").append($("<li>").text(msg));
+			});
+			socket.on("room update", (package) => {
+				room = package.roomcode;
+				for (i in package.chatHistory) {
+					$("#messages").append($("<li>").text(package.chatHistory[i]))
+				}
+			})
+		});
+	</script>
+	<body>
+		<div id="chatbox">
+			<ul id="messages"></ul>
+			<form id="chat_input" action="">
+				<input id="m" autocomplete="off" />
+			</form>
+		</div>
+	</body>
+</html>
