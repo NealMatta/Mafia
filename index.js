@@ -20,6 +20,10 @@ function currentTime() {
 	return '[' + d.toTimeString().substr(0, 8) + '] ';
 }
 
+function randomNumBetween(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function generateRoomCode() {
 	return (
 		'game' +
@@ -48,6 +52,62 @@ class Room {
 			chatHistory: this.chatHistory,
 		};
 		return to_return;
+	}
+}
+
+export class Game {
+	constructor(players, numSheriff, numDoctors, numMafia) {
+		// Check for irregularities. Ex. numRoles can't be greater than # of players
+		this.players = players;
+		this.numSheriff = numSheriff;
+		this.numDoctors = numDoctors;
+		this.numMafia = numMafia;
+		this.setAllRoles(players);
+	}
+
+	setAllRoles() {
+		const numPlayers = Object.keys(this.players).length;
+		const numVillagers = numPlayers - this.numSheriff - this.numDoctors - this.numMafia;
+		this.setPlayerRole(this.numSheriff, 'Sheriff');
+		this.setPlayerRole(this.numDoctors, 'Doctor');
+		this.setPlayerRole(this.numMafia, 'Mafia');
+		this.setPlayerRole(numVillagers, 'Villager');
+	}
+
+	setPlayerRole(numRole, role) {
+		const uniqueIDs = Object.keys(this.players);
+		const numPlayers = Object.keys(this.players).length;
+
+		for (let index = 0; index < numRole; index++) {
+			let randomUser = randomNumBetween(0, numPlayers - 1);
+			let userChosen = false;
+
+			while (!userChosen) {
+				if (this.players[uniqueIDs[randomUser]].getRole() == null) {
+					this.players[uniqueIDs[randomUser]].setRole(role);
+					userChosen = true;
+				}
+				randomUser = randomNumBetween(0, numPlayers - 1);
+			}
+		}
+	}
+
+	getPlayers() {
+		console.log(this.players);
+	}
+}
+
+class Player {
+	constructor(username) {
+		this.role = null;
+		this.username = username;
+	}
+
+	setRole(role) {
+		this.role = role;
+	}
+	getRole() {
+		return this.role;
 	}
 }
 
