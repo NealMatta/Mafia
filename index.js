@@ -43,30 +43,37 @@ class Room {
 		this.chatHistory = []; //string array of all chats
 		this.name = name; //custom room name
 		this.isPublic = isPublic; //whether this room should be advertised on homepage
+		this.gameOngoing = false;
+		this.game; //uninitialized until a game starts. needs to exist so clientPackage() doesn't fail.
+		this.members = {}; //contains players (sessionID:Player), populated when people join the room, passed to game upon game start.
+	}
+	addPlayer(id, username) {
+		this.members[id] = new Player(username);
+	}
+	startGame(numSheriff, numDoctors, numMafia) {
+		this.game = new Game(this.members, numSheriff, numDoctors, numMafia);
+		this.gameOngoing = true;
 	}
 	//a singular object to send the client, containing no private info (ex. who the mafia are)
 	clientPackage() {
-		let to_return = {
+		return {
 			roomname: this.name,
 			roomcode: this.code,
 			chatHistory: this.chatHistory,
+			gameHasBegun: this.gameOngoing,
+			game: this.game.clientPackage()
 		};
-		return to_return;
 	}
 }
 
-export class Game {
+class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
-		this.players = players;
+		this.players = players; //object with name:value pairs sessionID:Player
 		this.numSheriff = numSheriff;
 		this.numDoctors = numDoctors;
 		this.numMafia = numMafia;
-		this.setAllRoles(players);
-	}
-
-	setAllRoles() {
-		const numPlayers = Object.keys(this.players).length;
+		const numPlayers = Object.keys(players).length;
 		const numVillagers = numPlayers - this.numSheriff - this.numDoctors - this.numMafia;
 		this.setPlayerRole(this.numSheriff, 'Sheriff');
 		this.setPlayerRole(this.numDoctors, 'Doctor');
@@ -75,16 +82,22 @@ export class Game {
 	}
 
 	setPlayerRole(numRole, role) {
+		//	SUGGESTION
+		//	Instead of having this be a looping function that has to run four times,
+		//	accept all role and numRole as argument(s)
+		//	Generate a string array of roles, each role repeated for as many of them there should be.
+		//	Length of this array would match the number of players.
+		//	Then iterate through players and randomly assign one element of the role string array
+		//	Delete the element as it's assigned. I believe this would be a quicker way to set roles,
+		//	especially if there are many players. and only needs to be called once.
 		const uniqueIDs = Object.keys(this.players);
-		const numPlayers = Object.keys(this.players).length;
-
+		const numPlayers = uniqueIDs.length;
 		for (let index = 0; index < numRole; index++) {
 			let randomUser = randomNumBetween(0, numPlayers - 1);
 			let userChosen = false;
-
 			while (!userChosen) {
-				if (this.players[uniqueIDs[randomUser]].getRole() == null) {
-					this.players[uniqueIDs[randomUser]].setRole(role);
+				if (!this.roles[players[uniqueIDs[randomUser]]]) { //if it doesn't exist
+					this.roles[players[uniqueIDs[randomUser]]] = role;
 					userChosen = true;
 				}
 				randomUser = randomNumBetween(0, numPlayers - 1);
@@ -92,23 +105,24 @@ export class Game {
 		}
 	}
 
-	getPlayers() {
-		console.log(this.players);
+	clientPackage() {
+		return {
+			players:Object.values(this.players), //give client info about usernames & deaths
+			//also give:
+			//	what phase/whose turn it is
+		}
 	}
 }
 
 class Player {
 	constructor(username) {
-		this.role = null;
 		this.username = username;
+		this.isDead = false;
 	}
-
-	setRole(role) {
-		this.role = role;
+	kill() {
+		this.isDead = true; 
 	}
-	getRole() {
-		return this.role;
-	}
+	//role information is not included here because private
 }
 
 //// Express Events ////
@@ -117,7 +131,7 @@ app.use('/styles', express.static(__dirname + '/styles')); //provide client with
 
 //intermediary session definition to allow socketio to handle express sessions
 sessionDef = session({
-	secret: 'secret-key',
+	secret: 'secret-key', //apparently this should be some actual secret string. not sure why but eventually we can make it something random.
 	saveUninitialized: true,
 	resave: true,
 });
@@ -132,6 +146,7 @@ app.get('/', (req, res) => {
 
 //entering a game room
 app.get('/game*', (req, res) => {
+	//note: in this context, req.session refers to same object as socket.request.session in socket context. unsure if by value or reference
 	if (Object.keys(rooms).includes(req.path.substr(1))) {
 		req.session.socketRoomToJoin = req.path.substr(1);
 		console.log('user accessing game page.');
@@ -168,7 +183,7 @@ homesocket.on('connection', socket => {
 			socket.emit('warning', 'Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(name)) {
 			socket.emit('warning', 'Room with this name already exists.');
-		} else {
+		} else { //name is valid; make the room.
 			room = new Room(name, isPublic);
 			room.chatHistory.push('INVITE LINK: ' + url + room.code);
 			rooms[room.code] = room; //add this room to the catalog of all rooms
@@ -184,7 +199,7 @@ homesocket.on('connection', socket => {
 
 gamesocket.on('connection', socket => {
 	console.log('a user connected to game page');
-
+	//note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
 	//check if the room still exists
 	if (Object.keys(rooms).includes(socket.request.session.socketRoomToJoin)) {
 		//put the user in a socket room for the particular game room they're trying to enter
