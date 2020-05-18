@@ -21,6 +21,7 @@ function currentTime() {
 }
 
 function randomNumBetween(min, max) {
+	//inclusive
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -70,41 +71,27 @@ class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
 		this.players = players; //object with name:value pairs sessionID:Player
+		this.roles = {}; //name value pairs of sessionID:role
 		this.numSheriff = numSheriff;
 		this.numDoctors = numDoctors;
 		this.numMafia = numMafia;
-		const numPlayers = Object.keys(players).length;
-		const numVillagers = numPlayers - this.numSheriff - this.numDoctors - this.numMafia;
-		this.setPlayerRole(this.numSheriff, 'Sheriff');
-		this.setPlayerRole(this.numDoctors, 'Doctor');
-		this.setPlayerRole(this.numMafia, 'Mafia');
-		this.setPlayerRole(numVillagers, 'Villager');
 	}
-
-	setPlayerRole(numRole, role) {
-		//	SUGGESTION
-		//	Instead of having this be a looping function that has to run four times,
-		//	accept all role and numRole as argument(s)
-		//	Generate a string array of roles, each role repeated for as many of them there should be.
-		//	Length of this array would match the number of players.
-		//	Then iterate through players and randomly assign one element of the role string array
-		//	Delete the element as it's assigned. I believe this would be a quicker way to set roles,
-		//	especially if there are many players. and only needs to be called once.
-		const uniqueIDs = Object.keys(this.players);
-		const numPlayers = uniqueIDs.length;
-		for (let index = 0; index < numRole; index++) {
-			let randomUser = randomNumBetween(0, numPlayers - 1);
-			let userChosen = false;
-			while (!userChosen) {
-				if (!this.roles[players[uniqueIDs[randomUser]]]) { //if it doesn't exist
-					this.roles[players[uniqueIDs[randomUser]]] = role;
-					userChosen = true;
-				}
-				randomUser = randomNumBetween(0, numPlayers - 1);
-			}
+	assignRoles() {
+		this.numVillagers = Object.keys(this.players).length - this.numSheriff - this.numDoctors - this.numMafia;
+		let part1 = Array(this.numSheriff).fill('Sheriff');
+		let part2 = Array(this.numDoctors).fill('Doctor');
+		let part3 = Array(this.numMafia).fill('Mafia');
+		let part4 = Array(this.numVillagers).fill('Villager');
+		let roleLabels = part1.concat(part2, part3, part4);
+		let players = Object.keys(this.players);
+		while (!roleLabels==[]) { //perform until no more labels to give/roles to assign
+			role = roleLabels[randomNumBetween(0,roleLabels.length-1)];
+			player = players[randomNumBetween(0,players.length-1)];
+			this.roles[player] = role;
+			delete players[player];
+			delete roleLabels[role];
 		}
 	}
-
 	clientPackage() {
 		return {
 			players:Object.values(this.players), //give client info about usernames & deaths
@@ -122,7 +109,7 @@ class Player {
 	kill() {
 		this.isDead = true; 
 	}
-	//role information is not included here because private
+	//role information is not included here because it's private, and so instead stored within a property of Game
 }
 
 //// Express Events ////
