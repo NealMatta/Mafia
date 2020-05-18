@@ -2,12 +2,12 @@ body {
 	background-color: #757575;
 }
 
-#chatbox {
+.chatbox {
 	background-color: #a3a3a3;
-	width: 25%;
+	width: 30%;
 	height: 90%;
-	left: 5%;
-	top: 5%;
+	/* left: 5%; */
+	/* top: 5%; */
 	position: fixed;
 	border: 2px black solid;
 }

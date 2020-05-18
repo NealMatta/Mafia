@@ -55,7 +55,7 @@ class Room {
 	}
 }
 
-export class Game {
+class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
 		this.players = players;

@@ -3,6 +3,29 @@
 	<head>
 		<title>MAFIA</title>
 		<link rel="stylesheet" type="text/css" href="styles/style.css" />
+		<link rel="stylesheet" type="text/css" href="styles/css/style.css" />
+
+		<link
+			rel="stylesheet"
+			href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+			integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+			integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+			integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+			crossorigin="anonymous"
+		></script>
 	</head>
 
 	<script src="/socket.io/socket.io.js"></script>
@@ -10,30 +33,81 @@
 	<script>
 		$(function() {
 			var socket = io('/game');
-			var room = "";
-			$("#chat_input").submit(function(e) {
+			var room = '';
+			$('#chat_input').submit(function(e) {
 				e.preventDefault(); // prevents page reloading
-				socket.emit("chat message", [room, $("#m").val()]); //when a user sends a message, send it to server as 'chat message' event
-				$("#m").val("");
+				socket.emit('chat message', [room, $('#m').val()]); //when a user sends a message, send it to server as 'chat message' event
+				$('#m').val('');
 				return false;
 			});
-			socket.on("new chat", function(msg) {
-				$("#messages").append($("<li>").text(msg));
+			socket.on('new chat', function(msg) {
+				$('#messages').append($('<li>').text(msg));
 			});
-			socket.on("room update", (package) => {
+			socket.on('room update', package => {
 				room = package.roomcode;
 				for (i in package.chatHistory) {
-					$("#messages").append($("<li>").text(package.chatHistory[i]))
+					$('#messages').append($('<li>').text(package.chatHistory[i]));
 				}
-			})
+			});
 		});
 	</script>
 	<body>
-		<div id="chatbox">
-			<ul id="messages"></ul>
-			<form id="chat_input" action="">
-				<input id="m" autocomplete="off" />
-			</form>
+		<div class="container-fluid height-full">
+			<h1>Mafia</h1>
+			<div class="row justify-content-md-center">
+				<div class="col-4">
+					<div class="chatbox">
+						<ul id="messages"></ul>
+						<form id="chat_input" action="">
+							<input id="m" autocomplete="off" />
+						</form>
+					</div>
+				</div>
+				<div class="col-8">
+					<div class="row">
+						<div class="col">
+							<h2>Players</h2>
+							<ul class="players list-group list-group-horizontal">
+								<li class="list-group-item">Player Name</li>
+								<li class="list-group-item">Player Name</li>
+								<li class="list-group-item">Player Name</li>
+							</ul>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-6">
+							<h2>Your Role - Mafia</h2>
+							<ul class="list-group list-group-horizontal">
+								<li class="list-group-item">Player Name</li>
+								<li class="list-group-item">Player Name</li>
+								<li class="list-group-item">Player Name</li>
+							</ul>
+						</div>
+						<div class="col-6">
+							<h2>Actions</h2>
+							<h4>Choose 2 Victims</h4>
+							<ul class="players list-group list-group-horizontal">
+								<li class="list-group-item">Player Name</li>
+								<li class="list-group-item">Player Name</li>
+							</ul>
+							<div class="row">
+								<div class="col-6">
+									<p>Confirm (Y/N)</p>
+								</div>
+								<div class="col-6">
+									<p>Confirmed: 2/4</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<h1>Game Log</h1>
+							<div class="gameLog"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</body>
 </html>
