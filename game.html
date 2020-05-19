@@ -54,9 +54,9 @@
 	<body>
 		<div class="container-fluid height-full">
 			<h1>Mafia</h1>
-			<div class="row justify-content-md-center">
+			<div class="row justify-content-center">
 				<div class="col-4">
-					<div class="chatbox">
+					<div id="chatbox">
 						<ul id="messages"></ul>
 						<form id="chat_input" action="">
 							<input id="m" autocomplete="off" />
@@ -64,32 +64,45 @@
 					</div>
 				</div>
 				<div class="col-8">
-					<div class="row">
+					<div class="row section">
 						<div class="col">
-							<h2>Players</h2>
-							<ul class="players list-group list-group-horizontal">
-								<li class="list-group-item">Player Name</li>
-								<li class="list-group-item">Player Name</li>
-								<li class="list-group-item">Player Name</li>
-							</ul>
+							<h2>All Players</h2>
+							<div class="players container">
+								<div class="row">
+									<div class="col-2 individualPlayer">Player Name</div>
+									<div class="col-2 individualPlayer">Player Name</div>
+									<div class="col-2 individualPlayer">Player Name</div>
+									<div class="col-2 individualPlayer">Player Name</div>
+									<div class="col-2 individualPlayer">Max Char: ~20 charac</div>
+									<div class="col-2 individualPlayer">Player Name Name</div>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div class="row">
+					<div class="row section">
 						<div class="col-6">
 							<h2>Your Role - Mafia</h2>
-							<ul class="list-group list-group-horizontal">
-								<li class="list-group-item">Player Name</li>
-								<li class="list-group-item">Player Name</li>
-								<li class="list-group-item">Player Name</li>
-							</ul>
+							<!-- Should show this for roled players but not villagers -->
+							<h4>Other Mafias</h4>
+							<div class="players container">
+								<div class="row justify-content-center">
+									<div class="col-3 roledPlayer">Player Name</div>
+									<div class="col-3 roledPlayer">Player Name</div>
+									<div class="col-3 roledPlayer">Player Name</div>
+								</div>
+							</div>
 						</div>
 						<div class="col-6">
 							<h2>Actions</h2>
-							<h4>Choose 2 Victims</h4>
-							<ul class="players list-group list-group-horizontal">
-								<li class="list-group-item">Player Name</li>
-								<li class="list-group-item">Player Name</li>
-							</ul>
+							<h4>Choose X Victims</h4>
+							<!-- May need to turn this into a form with a submit button -->
+							<div class="players container">
+								<div class="row justify-content-center">
+									<div class="col-3 actionPlayer">Player Name</div>
+									<div class="col-3 actionPlayer">Player Name</div>
+									<div class="col-3 actionPlayer">Player Name</div>
+								</div>
+							</div>
 							<div class="row">
 								<div class="col-6">
 									<p>Confirm (Y/N)</p>
@@ -100,7 +113,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="row">
+					<div class="row section">
 						<div class="col">
 							<h1>Game Log</h1>
 							<div class="gameLog"></div>
