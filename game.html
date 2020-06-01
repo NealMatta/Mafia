@@ -180,9 +180,16 @@
                                     <div class="card-body p-2">Player 7</div>
                                 </div>
                             </div>
-                            <input class="btn btn-success" type="checkbox">
+                            <input id="confirmationBox" class="btn btn-success" type="checkbox">
                             <label>Confirm</label>
-                            <p>Confirmed: <span>(1/2)</span></p>
+                            <p>Confirmed: <span>(<span id="count">0</span>/2)</span></p>
+                            <script>
+                                $(function() {
+                                    $('#confirmationBox').on('change',function(){
+                                        $(this).is(':checked') ? $('#count').text('1') : $('#count').text('0');
+                                    });
+                                })
+                            </script>
                         </div>
                     </div>
                     <div class="row h-25 mh-25 border d-flex flex-column-reverse overflow-auto">
