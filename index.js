@@ -35,13 +35,13 @@ function generateRoomCode() {
 	);
 }
 
-function generateRandCode() {
-	return (
-		Math.random()
-			.toString(36)
-            .substr(2, 6)
-	);
-}
+// function generateRandCode() {
+// 	return (
+// 		Math.random()
+// 			.toString(36)
+//             .substr(2, 6)
+// 	);
+// }
 
 class Room {
 	constructor(name, isPublic) {
@@ -83,6 +83,12 @@ class Game {
         this.assignRoles();
         this.playerkey = players; //holds original roles, for distribution in postgame
         this.gamePhase = 'Day';
+        this.roleRoomCodes = {
+            'Mafia': generateRoomCode(),
+            'Sheriff': generateRoomCode(),
+            'Doctor': generateRoomCode(),
+            'Spectator': generateRoomCode()
+        }
     }
 	assignRoles() {
 		this.numVillagers = Object.keys(this.players).length - this.numSheriff - this.numDoctors - this.numMafia;
@@ -171,15 +177,17 @@ class Game {
             }
         }
     }
-    // sendPrivateMessage(to, from, msg) {
-    //     //to == role; from == session ID
-    //     for (sid in players) {
-    //         if (players[sid].role == to) {
-    //             players[sid].gameLog.push(currentTime() + '(' players[from].username + ' > ' + to + ') ' + msg);
-    //             //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
-    //         }
-    //     }
-    // }
+    sendPrivateMessage(to, from, msg) {
+        //to == role; from == session ID
+        let formatted_msg = currentTime() + '(' this.players[from].username + ' > ' + to + ') ' + msg;
+        //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
+        for (sid in players) {
+            if (players[sid].role == to) {
+                players[sid].gameLog.push(formatted_msg);
+            }
+        }
+        return formatted_msg;
+    }
 	clientPackage(sessionID) {
         return {
             me: this.players[sessionID], //so client can can read their own gamelog, role, and status
@@ -288,25 +296,38 @@ gamesocket.on('connection', socket => {
 	//check if the room still exists
     if (Object.keys(rooms).includes(roomToJoin)) { //if the room exists...
 		//put the user in a socket room for the particular game room they're trying to enter
-		socket.join(roomToJoin);
+        socket.join(roomToJoin);
+        //check if a game has begun
+        if (rooms[roomToJoin].game != null) {
+            //put the user is a socket room for their particular role in the game
+            if (rooms[roomToJoin].game.players[SESSION_ID].role != 'Villager') {
+                //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
+                socket.join(roomToJoin+rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]);
+            }
+        }
 		//provide user with (public) room information
         //socket.emit('room update', rooms[socket.request.session.socketRoomToJoin].clientPackage());
+
     }
-    
+    // socket.on('game start', () => {
+    //     rooms[roomToJoin].game = new Game(rooms[roomToJoin].members, 0, 0, 0)
+    // })
+
 	socket.on('public message', (msg) => {
 		let time_appended_msg = currentTime() + text; //format the message
 		rooms[roomToJoin].chatHistory.push(time_appended_msg); //add the message to the room's chat history
 		console.log('message in room ' + roomToJoin + ':' + time_appended_msg); //print the chat message event
 		gamesocket.emit('new chat', time_appended_msg); //send message to everyone on a game page
     });
-    // socket.on('private message', (msg) => {
-    //     let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-    //     let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
-    //     if (sender_role != 'Villager') { //everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-    //         rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg);
-    //     }
-	// 	console.log('private message to ' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
-    // });
+    socket.on('private message', (msg) => {
+        let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+        let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
+        console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
+        if (sender_role != 'Villager') { //everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
+            let formatted_msg = rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg);
+            gamesocket.in(roomToJoin+rooms[roomToJoin].game.roleRoomCodes[sender_role]).emit('new private chat', formatted_msg);
+        }        
+    });
 
 	socket.on('disconnect', () => {
 		//what to do upon new user disappearing
