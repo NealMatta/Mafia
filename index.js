@@ -30,24 +30,30 @@ function generateRoomCode() {
 		'game' +
 		Math.random()
 			.toString(36)
-			.substring(2, 15)
+            .substr(2, 4)
+            .toUpperCase()
 	);
 }
 
-function verifyRequest(player, room) {
-	return 1;
+function generateRandCode() {
+	return (
+		Math.random()
+			.toString(36)
+            .substr(2, 6)
+	);
 }
 
 class Room {
 	constructor(name, isPublic) {
-		this.code = generateRoomCode();
+        this.code = generateRoomCode(); //a code for people to use to join the lobby
 		this.chatHistory = []; //string array of all chats
 		this.name = name; //custom room name
 		this.isPublic = isPublic; //whether this room should be advertised on homepage
-		this.gameOngoing = false;
-		this.game; //uninitialized until a game starts. needs to exist so clientPackage() doesn't fail.
-		this.members = {}; //contains players (sessionID:Player), populated when people join the room, passed to game upon game start.
-	}
+		this.gameOngoing = false; //this might end up being unnecessary, instead perhaps just checking if game==null
+		this.game = null; //null until a game starts. needs to be initialized here so clientPackage() doesn't fail.
+        this.members = {}; //contains players (sessionID:Player), populated when people set a username, passed to game upon game start.
+                            //after game start, could include spectators?
+    }
 	addPlayer(id, username) {
 		this.members[id] = new Player(username);
 	}
@@ -55,14 +61,14 @@ class Room {
 		this.game = new Game(this.members, numSheriff, numDoctors, numMafia);
 		this.gameOngoing = true;
 	}
-	//a singular object to send the client, containing no private info (ex. who the mafia are)
-	clientPackage() {
+	//a singular object to send the client, containing pertinent info and nothing the client shouldn't have access to
+	clientPackage(sessionID) {
 		return {
 			roomname: this.name,
 			roomcode: this.code,
 			chatHistory: this.chatHistory,
-			gameHasBegun: this.gameOngoing,
-			game: this.game.clientPackage()
+			gameHasBegun: this.gameOngoing, //this might end up being unnecessary, instead perhaps just checking if game==null
+            game: (this.game==null) ? this.game.clientPackage(sessionID) : null
 		};
 	}
 }
@@ -71,11 +77,13 @@ class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
 		this.players = players; //object with name:value pairs sessionID:Player
-		this.roles = {}; //name value pairs of sessionID:role
 		this.numSheriff = numSheriff;
 		this.numDoctors = numDoctors;
-		this.numMafia = numMafia;
-	}
+        this.numMafia = numMafia;
+        this.assignRoles();
+        this.playerkey = players; //holds original roles, for distribution in postgame
+        this.gamePhase = 'Day';
+    }
 	assignRoles() {
 		this.numVillagers = Object.keys(this.players).length - this.numSheriff - this.numDoctors - this.numMafia;
 		let part1 = Array(this.numSheriff).fill('Sheriff');
@@ -83,33 +91,120 @@ class Game {
 		let part3 = Array(this.numMafia).fill('Mafia');
 		let part4 = Array(this.numVillagers).fill('Villager');
 		let roleLabels = part1.concat(part2, part3, part4);
-		let players = Object.keys(this.players);
-		while (!roleLabels==[]) { //perform until no more labels to give/roles to assign
+		let players = Object.keys(this.players); //list of session IDs
+		while (roleLabels.length != 0) { //perform until no more labels to give/roles to assign
 			role = roleLabels[randomNumBetween(0,roleLabels.length-1)];
 			player = players[randomNumBetween(0,players.length-1)];
-			this.roles[player] = role;
+			this.players[player].setRole(role);
 			delete players[player];
 			delete roleLabels[role];
 		}
-	}
-	clientPackage() {
-		return {
-			players:Object.values(this.players), //give client info about usernames & deaths
-			//also give:
-			//	what phase/whose turn it is
-		}
+    }
+    getPlayerList(status = 'All') {
+        //return [{username: username, isDead: isDead},...]
+        var to_return = [];
+        if (status == 'Alive') { //if status is overrided to only request alive players
+            for (sid in this.players) {
+                if (!players[sid].isDead) {
+                    to_return.push({username:players[sid].username, isDead:players[sid].isDead})
+                }
+            }
+        }
+        else { //if an argument is not provided (default behavior)
+            for (sid in this.players) { 
+                to_return.push({username:players[sid].username, isDead:players[sid].isDead})
+            }
+        }
+        return to_return;
+    }
+    getPlayersWithRole(role) {
+        //return list of usernames
+        var to_return = [];
+        for (sid in this.players) {
+            if (players[sid].role == role) {
+                to_return.push(players[sid].username)
+            }
+        }
+        return to_return;
+    }
+    advance() { //move on to the next game phase
+        this.gamePhase == 'Day' ? this.gamePhase = 'Night' : this.gamePhase = 'Day';
+    }
+    actions(role) { //contents of the action box for each type of player
+        if (this.gamePhase == 'Day') {
+            return {
+                prompt: 'Select who to execute',
+                choices: this.getPlayerList('Alive'),
+                teammates: this.getPlayerList('Alive')
+            }
+        }
+        else { // Night
+            switch(role) {
+                case 'Mafia':
+                    return {
+                        prompt: 'Select who to kill',
+                        choices: this.getPlayerList('Alive'),
+                        teammates: this.getPlayersWithRole('Mafia')
+                    }
+                    break;
+                case 'Doctor':
+                    return {
+                        prompt: 'Select who to save',
+                        choices: this.getPlayerList('Alive'),
+                        teammates: this.getPlayersWithRole('Doctor')
+                    }
+                    break;
+                case 'Sheriff':
+                    return {
+                        prompt: 'Select who to investigate',
+                        choices: this.getPlayerList('Alive'), //perhaps dead or alive? possibly you can investigate dead people? maybe not good strategy but not unrealistic
+                        teammates: this.getPlayersWithRole('Sheriff')
+                    }
+                    break;
+                default: //villagers
+                    return {
+                        prompt: '',
+                        choices: {},
+                        teammates: {}
+                    }
+                    break;
+            }
+        }
+    }
+    // sendPrivateMessage(to, from, msg) {
+    //     //to == role; from == session ID
+    //     for (sid in players) {
+    //         if (players[sid].role == to) {
+    //             players[sid].gameLog.push(currentTime() + '(' players[from].username + ' > ' + to + ') ' + msg);
+    //             //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
+    //         }
+    //     }
+    // }
+	clientPackage(sessionID) {
+        return {
+            me: this.players[sessionID], //so client can can read their own gamelog, role, and status
+            players: this.getPlayerList(),
+            actions: this.actions(this.players[sessionID].role),
+            teammates: (this.players[sessionID].role == 'Villager' || this.players[sessionID].role == 'Spectator')
+                ? []
+                : this.getPlayersWithRole(this.players[sessionID].role)
+        };
 	}
 }
 
 class Player {
 	constructor(username) {
 		this.username = username;
-		this.isDead = false;
+        this.isDead = false;
+        this.gameLog = []; //a complete log private to this player. can contain things like... "You investigated Alice -- she is a Villager" or "You and 2 other mafia killed Bob"
 	}
 	kill() {
-		this.isDead = true; 
-	}
-	//role information is not included here because it's private, and so instead stored within a property of Game
+        this.isDead = true; 
+        this.role = 'Spectator'
+    }
+    setRole(role) {
+        this.role = role;
+    }
 }
 
 //// Express Events ////
@@ -135,7 +230,6 @@ app.get('/', (req, res) => {
 app.get('/game*', (req, res) => {
 	//note: in this context, req.session refers to same object as socket.request.session in socket context. unsure if by value or reference
 	if (Object.keys(rooms).includes(req.path.substr(1))) {
-		req.session.socketRoomToJoin = req.path.substr(1);
 		console.log('user accessing game page.');
 		res.sendFile(__dirname + '/game.html');
 	} else {
@@ -161,9 +255,9 @@ homesocket.on('connection', socket => {
 	//give user list of open public games
 	socket.emit('populate rooms', Object.keys(public_rooms));
 
-	socket.on('room create', room_info => {
+	socket.on('room create', (room_info) => {
 		// names have to be unique and at least one character. arbitrary max of 32
-		name = room_info[0]; //eventually should sanitization
+		name = room_info[0]; //eventually should sanitize
 		isPublic = room_info[1];
 		console.log('length of name: ' + name.length);
 		if (!(name.length > 0 && name.length < 33)) {
@@ -172,7 +266,7 @@ homesocket.on('connection', socket => {
 			socket.emit('warning', 'Room with this name already exists.');
 		} else { //name is valid; make the room.
 			room = new Room(name, isPublic);
-			room.chatHistory.push('INVITE LINK: ' + url + room.code);
+            room.chatHistory.push('INVITE LINK: ' + url + room.code);
 			rooms[room.code] = room; //add this room to the catalog of all rooms
 			if (isPublic) {
 				public_rooms[name] = room.code;
@@ -185,25 +279,34 @@ homesocket.on('connection', socket => {
 });
 
 gamesocket.on('connection', socket => {
-	console.log('a user connected to game page');
-	//note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
-	//check if the room still exists
-	if (Object.keys(rooms).includes(socket.request.session.socketRoomToJoin)) {
-		//put the user in a socket room for the particular game room they're trying to enter
-		socket.join(socket.request.session.socketRoomToJoin);
-		//provide user with (public) room information
-		socket.emit('room update', rooms[socket.request.session.socketRoomToJoin].clientPackage());
-	}
+    console.log('a user connected to game page');
+    let roomToJoin = socket.handshake.headers.referer.toString().split('/').pop().substr(0,8);
 
-	socket.on('chat message', msg => {
-		console.log(msg);
-		roomcode = msg[0];
-		text = msg[1];
-		var time_appended_msg = currentTime() + text; //format the message
-		rooms[roomcode].chatHistory.push(time_appended_msg); //add the message to the room's chat history
-		console.log('message in room ' + roomcode + ':' + time_appended_msg); //print the chat message event
+    //note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
+    let SESSION_ID = socket.request.session.id;
+    
+	//check if the room still exists
+    if (Object.keys(rooms).includes(roomToJoin)) { //if the room exists...
+		//put the user in a socket room for the particular game room they're trying to enter
+		socket.join(roomToJoin);
+		//provide user with (public) room information
+        //socket.emit('room update', rooms[socket.request.session.socketRoomToJoin].clientPackage());
+    }
+    
+	socket.on('public message', (msg) => {
+		let time_appended_msg = currentTime() + text; //format the message
+		rooms[roomToJoin].chatHistory.push(time_appended_msg); //add the message to the room's chat history
+		console.log('message in room ' + roomToJoin + ':' + time_appended_msg); //print the chat message event
 		gamesocket.emit('new chat', time_appended_msg); //send message to everyone on a game page
-	});
+    });
+    // socket.on('private message', (msg) => {
+    //     let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+    //     let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
+    //     if (sender_role != 'Villager') { //everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
+    //         rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg);
+    //     }
+	// 	console.log('private message to ' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
+    // });
 
 	socket.on('disconnect', () => {
 		//what to do upon new user disappearing
