@@ -321,6 +321,7 @@ gamesocket.on('connection', socket => {
                 }
                 //let room know about reconnection
                 rooms[roomToJoin].chatHistory.push(currentTime() + rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
+                gamesocket.to(roomToJoin).emit('new chat', time_appended_msg); //push message to everyone else in room
                 //provide user with all needed room information
                 socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
             }
@@ -358,11 +359,11 @@ gamesocket.on('connection', socket => {
         }
     })
 
-	socket.on('public message', (msg) => {
+	socket.on('public message', (text) => {
 		let time_appended_msg = currentTime() + text; //format the message
 		rooms[roomToJoin].chatHistory.push(time_appended_msg); //add the message to the room's chat history
 		console.log('message in room ' + roomToJoin + ':' + time_appended_msg); //print the chat message event
-		gamesocket.emit('new chat', time_appended_msg); //send message to everyone on a game page
+		gamesocket.in(roomToJoin).emit('new chat', time_appended_msg); //send message to everyone in room
     });
 
     socket.on('private message', (msg) => {
@@ -382,7 +383,9 @@ gamesocket.on('connection', socket => {
         }
         //if the game is ongoing and the disconnecting client was part of it, warn the room of this disconnect
         else if (rooms[roomToJoin].game.players[SESSION_ID]) {
-            rooms[roomToJoin].chatHistory.push(currentTime() + rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.');
+            let msg = currentTime() + rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.';
+            rooms[roomToJoin].chatHistory.push(msg);
+            gamesocket.in(roomToJoin).emit('new chat', time_appended_msg);
         }
 		console.log('user disconnected w socket id:' + socket.id);
 	});
