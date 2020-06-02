@@ -35,16 +35,8 @@ function generateRoomCode() {
 	);
 }
 
-// function generateRandCode() {
-// 	return (
-// 		Math.random()
-// 			.toString(36)
-//             .substr(2, 6)
-// 	);
-// }
-
 class Room {
-	constructor(name, isPublic) {
+	constructor(name, isPublic, host) {
         this.code = generateRoomCode(); //a code for people to use to join the lobby
 		this.chatHistory = []; //string array of all chats
 		this.name = name; //custom room name
@@ -53,22 +45,41 @@ class Room {
 		this.game = null; //null until a game starts. needs to be initialized here so clientPackage() doesn't fail.
         this.members = {}; //contains players (sessionID:Player), populated when people set a username, passed to game upon game start.
                             //after game start, could include spectators?
+        this.socket_session_link = {}; //contains (sessionID:socketID), so clientpackages can be distributed to relevant sockets and clients can be tracked through refreshes
+        this.host = host; //sessionID of the host, who is given priviledge of starting the game
     }
-	addPlayer(id, username) {
-		this.members[id] = new Player(username);
-	}
+	addPlayer(socket_id, session_id, username) {
+        this.members[session_id] = new Player(username);
+        updateSocketLink(socket_id, session_id);
+    }
+    removePlayer(socket_id, session_id) {
+        delete this.members[socket_id];
+        delete this.socket_session_link[session_id];
+    }
+    updateSocketLink(socket_id, session_id) {
+        this.socket_session_link[session_id] = socket_id;
+    }
 	startGame(numSheriff, numDoctors, numMafia) {
 		this.game = new Game(this.members, numSheriff, numDoctors, numMafia);
 		this.gameOngoing = true;
-	}
+    }
+    getMemberList() { //used to populate user list in lobby, primarily for pre-game prep purposes
+        let to_return = [];
+        for (sid in this.members) {
+            to_return.push(this.members[sid].username);
+        }
+        return to_return;
+    }
 	//a singular object to send the client, containing pertinent info and nothing the client shouldn't have access to
 	clientPackage(sessionID) {
 		return {
 			roomname: this.name,
 			roomcode: this.code,
-			chatHistory: this.chatHistory,
+            chatHistory: this.chatHistory,
+            users_present: this.getMemberList(),
 			gameHasBegun: this.gameOngoing, //this might end up being unnecessary, instead perhaps just checking if game==null
-            game: (this.game==null) ? this.game.clientPackage(sessionID) : null
+            game: (this.game != null) ? this.game.clientPackage(sessionID) : null,
+            isHost: (sessionID == this.host) //on client side, if this is true, it will give them options for starting the game
 		};
 	}
 }
@@ -76,9 +87,9 @@ class Room {
 class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
 		// Check for irregularities. Ex. numRoles can't be greater than # of players
-		this.players = players; //object with name:value pairs sessionID:Player
-		this.numSheriff = numSheriff;
-		this.numDoctors = numDoctors;
+        this.players = players; //object with name:value pairs sessionID:Player
+        this.numSheriff = numSheriff;
+        this.numDoctors = numDoctors;
         this.numMafia = numMafia;
         this.assignRoles();
         this.playerkey = players; //holds original roles, for distribution in postgame
@@ -111,14 +122,14 @@ class Game {
         var to_return = [];
         if (status == 'Alive') { //if status is overrided to only request alive players
             for (sid in this.players) {
-                if (!players[sid].isDead) {
-                    to_return.push({username:players[sid].username, isDead:players[sid].isDead})
+                if (!this.players[sid].isDead) {
+                    to_return.push({username:this.players[sid].username, isDead:this.players[sid].isDead})
                 }
             }
         }
         else { //if an argument is not provided (default behavior)
             for (sid in this.players) { 
-                to_return.push({username:players[sid].username, isDead:players[sid].isDead})
+                to_return.push({username:this.players[sid].username, isDead:this.players[sid].isDead})
             }
         }
         return to_return;
@@ -127,8 +138,8 @@ class Game {
         //return list of usernames
         var to_return = [];
         for (sid in this.players) {
-            if (players[sid].role == role) {
-                to_return.push(players[sid].username)
+            if (this.players[sid].role == role) {
+                to_return.push(this.players[sid].username)
             }
         }
         return to_return;
@@ -179,11 +190,11 @@ class Game {
     }
     sendPrivateMessage(to, from, msg) {
         //to == role; from == session ID
-        let formatted_msg = currentTime() + '(' this.players[from].username + ' > ' + to + ') ' + msg;
+        let formatted_msg = currentTime() + '(' + this.players[from].username + ' > ' + to + ') ' + msg;
         //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
-        for (sid in players) {
-            if (players[sid].role == to) {
-                players[sid].gameLog.push(formatted_msg);
+        for (sid in this.players) {
+            if (this.players[sid].role == to) {
+                this.players[sid].gameLog.push(formatted_msg);
             }
         }
         return formatted_msg;
@@ -192,6 +203,7 @@ class Game {
         return {
             me: this.players[sessionID], //so client can can read their own gamelog, role, and status
             players: this.getPlayerList(),
+            phase: this.gamePhase,
             actions: this.actions(this.players[sessionID].role),
             teammates: (this.players[sessionID].role == 'Villager' || this.players[sessionID].role == 'Spectator')
                 ? []
@@ -288,6 +300,7 @@ homesocket.on('connection', socket => {
 
 gamesocket.on('connection', socket => {
     console.log('a user connected to game page');
+    //parse, from the client url attempt, which room is being joined
     let roomToJoin = socket.handshake.headers.referer.toString().split('/').pop().substr(0,8);
 
     //note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
@@ -299,19 +312,51 @@ gamesocket.on('connection', socket => {
         socket.join(roomToJoin);
         //check if a game has begun
         if (rooms[roomToJoin].game != null) {
-            //put the user is a socket room for their particular role in the game
-            if (rooms[roomToJoin].game.players[SESSION_ID].role != 'Villager') {
-                //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
-                socket.join(roomToJoin+rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]);
+            //check if the user is part of the game, in which case this is a reconnection
+            if (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) {
+                rooms[roomToJoin].updateSocketLink(socket.id, SESSION_ID);
+                //put the user in a socket room for their particular role in the game (except villagers, who don't have private chat)
+                if (rooms[roomToJoin].game.players[SESSION_ID].role != 'Villager') {
+                    socket.join(roomToJoin+rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]); //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
+                }
+                //let room know about reconnection
+                rooms[roomToJoin].chatHistory.push(currentTime() + rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
+                //provide user with all needed room information
+                socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
+            }
+            //if they're not part of the game, add them as spectator //currently should not be implemented because Game doesn't support spectators that well yet
+        }
+    }
+
+    socket.on('name set', (name, errorback) => {
+        //errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
+        if (rooms[roomToJoin].getMemberList.includes(name)) {
+            errorback('That name is already in use in this game')
+        }
+        else {
+            rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
+        }
+    });
+
+    socket.on('game start', (options, errorback) => {
+        //options should be {mafia:integer, sheriffs:integer, doctors:integer}
+        //errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
+        if (Object.keys(rooms[roomToJoin].members).length <= 4) {
+            errorback('There must be at least four players to start a game');
+        }
+        else if ((options.mafia + options.sheriffs + options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
+            errorback('Too many roles have been assigned');
+        }
+        else {
+            //create new game
+            rooms[roomToJoin].game = new Game(rooms[roomToJoin].members, options.mafia, options.sheriff, options.doctor);
+            //start game for everyone by pushing them an update
+            //at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
+            for (session_id in rooms[roomToJoin].socket_session_link) {
+                gamesocket.to(socket_session_link[session_id]).emit('room update', rooms[roomToJoin].clientPackage(session_id));
             }
         }
-		//provide user with (public) room information
-        //socket.emit('room update', rooms[socket.request.session.socketRoomToJoin].clientPackage());
-
-    }
-    // socket.on('game start', () => {
-    //     rooms[roomToJoin].game = new Game(rooms[roomToJoin].members, 0, 0, 0)
-    // })
+    })
 
 	socket.on('public message', (msg) => {
 		let time_appended_msg = currentTime() + text; //format the message
@@ -319,6 +364,7 @@ gamesocket.on('connection', socket => {
 		console.log('message in room ' + roomToJoin + ':' + time_appended_msg); //print the chat message event
 		gamesocket.emit('new chat', time_appended_msg); //send message to everyone on a game page
     });
+
     socket.on('private message', (msg) => {
         let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
         let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
@@ -330,9 +376,15 @@ gamesocket.on('connection', socket => {
     });
 
 	socket.on('disconnect', () => {
-		//what to do upon new user disappearing
-		//TODO: announce to gamelog who has disconnected
-		console.log('user disconnected');
+        //if still in pregame stage, remove player from room membership
+        if (rooms[roomToJoin].game == null) {
+            rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
+        }
+        //if the game is ongoing and the disconnecting client was part of it, warn the room of this disconnect
+        else if (rooms[roomToJoin].game.players[SESSION_ID]) {
+            rooms[roomToJoin].chatHistory.push(currentTime() + rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.');
+        }
+		console.log('user disconnected w socket id:' + socket.id);
 	});
 });
 
