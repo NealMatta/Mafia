@@ -179,7 +179,7 @@ class Game {
     }
     sendPrivateMessage(to, from, msg) {
         //to == role; from == session ID
-        let formatted_msg = currentTime() + '(' this.players[from].username + ' > ' + to + ') ' + msg;
+        let formatted_msg = currentTime() + '(' + this.players[from].username + ' > ' + to + ') ' + msg;
         //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
         for (sid in players) {
             if (players[sid].role == to) {
