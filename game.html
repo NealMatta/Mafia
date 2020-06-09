@@ -18,15 +18,65 @@
 	</head>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-    <script src="scripts/client.js"></script>
-    
+    <script>
+        $(function() {
+            var socket = io('/game');
+
+            // Chat-related DOM Elements
+            let publicChatForm  = $('#sendPubMsg');
+            let publicChatInput = $('#publicChatInput');
+            let publicChatUL = $('#publicChat');
+            let privateChatForm = $('#sendPrvMsg');
+            let privateChatInput = $('#privateChatInput');
+            let privateChatUL = $('#privateChat');
+
+            //Set a random usernae for now
+            socket.emit('name set', 'user'+Math.random().toString(36).substr(2, 4));
+
+            // Public Messaging and Logs
+            publicChatForm.submit(function(e) {
+                e.preventDefault(); // prevents page reloading
+                socket.emit('public message', publicChatInput.val());
+                publicChatInput.val('');
+                return false;
+            });
+            socket.on('new chat', (message) => {
+                let new_message = $('<li class="list-group-item">').text(message.content);
+                if (message.type == 'Public') {
+                    new_message.addClass('text-primary public_message'); // Could add custom css for color/bold/italic/whatever
+                }
+                else { //type == 'System'
+                    new_message.addClass('text-dark system_message'); // Could add custom css for color/bold/italic/whatever
+                }
+                publicChatUL.append(new_message);
+            });
+
+            // Private Messaging and Logs
+            privateChatForm.submit(function(e) {
+                e.preventDefault(); // prevents page reloading
+                socket.emit('private message', privateChatInput.val());
+                privateChatInput.val('');
+                return false;
+            });
+            socket.on('new private chat', (message) => {
+                let new_message = $('<li class="list-group-item">').text(message.content);
+                if (message.type == 'Private') {
+                    new_message.addClass('text-success private_message'); // Could add custom css for color/bold/italic/whatever
+                }
+                else { //type == 'System'
+                    new_message.addClass('text-dark system_message'); // Could add custom css for color/bold/italic/whatever
+                }
+                privateChatUL.append(new_message);
+            });
+        });
+    </script>
 	<body class="h-100">
 		<div class="container-fluid h-100 p-4">
 			<div class="row h-100">
 			    <div class="col-3 mh-100 border d-flex flex-column">
                     <h1>MAFIA</h1>
                     <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
-                        <ul class="list-group list-group-flush">
+                        <ul id="publicChat" class="list-group list-group-flush">
                             <li class="list-group-item">Hello World First</li>
                             <li class="list-group-item">Hello World</li>
                             <li class="list-group-item">Hello World</li>
@@ -76,12 +126,12 @@
                             <li class="list-group-item">Hello World Last</li>
                         </ul>
                     </div>
-                    <div class="input-group">
-                        <input type="text" class="form-control">
+                    <form id="sendPubMsg" class="input-group">
+                        <input id="publicChatInput" type="text" class="form-control">
                         <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button">Send</button>
+                            <input class="btn btn-outline-secondary" type="submit" value="Send">
                         </div>
-                    </div>
+                    </form>
                 </div>
                 <div class="col-9 mh-100">
                     <div class="row h-25 mh-25 overflow-auto border">
@@ -168,7 +218,7 @@
                                     <!-- <h3>It is <span>Night</span></h3> -->
                                 <div class="col mh-100 d-flex flex-column">
                                     <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
-                                        <ul class="list-group list-group-flush">
+                                        <ul id="privateChat" class="list-group list-group-flush">
                                             
                                             <li class="list-group-item">Hello World First</li>
                                             <li class="list-group-item">Hello World</li>
@@ -220,12 +270,12 @@
                                             <li class="list-group-item">Hello World Last</li>
                                         </ul>
                                     </div>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control">
+                                    <form id="sendPrvMsg" class="input-group">
+                                        <input id="privateChatInput" type="text" class="form-control">
                                         <div class="input-group-append">
-                                            <button class="btn btn-outline-secondary" type="button">Send</button>
+                                            <input class="btn btn-outline-secondary" type="submit" value="Send">
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>

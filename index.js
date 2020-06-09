@@ -51,7 +51,7 @@ class Room {
     }
 	addPlayer(socket_id, session_id, username) {
         this.members[session_id] = new Player(username);
-        updateSocketLink(socket_id, session_id);
+        this.updateSocketLink(socket_id, session_id);
     }
     removePlayer(socket_id, session_id) {
         delete this.members[socket_id];
@@ -66,7 +66,7 @@ class Room {
     }
     getMemberList() { //used to populate user list in lobby, primarily for pre-game prep purposes
         let to_return = [];
-        for (sid in this.members) {
+        for (var sid in this.members) {
             to_return.push(this.members[sid].username);
         }
         return to_return;
@@ -122,14 +122,14 @@ class Game {
         //return [{username: username, isDead: isDead},...]
         var to_return = [];
         if (status == 'Alive') { //if status is overrided to only request alive players
-            for (sid in this.players) {
+            for (var sid in this.players) {
                 if (!this.players[sid].isDead) {
                     to_return.push({username:this.players[sid].username, isDead:this.players[sid].isDead})
                 }
             }
         }
         else { //if an argument is not provided (default behavior)
-            for (sid in this.players) { 
+            for (var sid in this.players) { 
                 to_return.push({username:this.players[sid].username, isDead:this.players[sid].isDead})
             }
         }
@@ -138,7 +138,7 @@ class Game {
     getPlayersWithRole(role) {
         //return list of usernames
         var to_return = [];
-        for (sid in this.players) {
+        for (var sid in this.players) {
             if (this.players[sid].role == role) {
                 to_return.push(this.players[sid].username)
             }
@@ -194,7 +194,7 @@ class Game {
         //type == 'Private' or 'System'
         let message = new Message( text, type, this.players[from].username, to);
         //example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
-        for (sid in this.players) {
+        for (var sid in this.players) {
             if (this.players[sid].role == to) {
                 this.players[sid].privateLog.push(message);
             }
@@ -243,6 +243,7 @@ class Message {
 //// Express Events ////
 
 app.use('/styles', express.static(__dirname + '/styles')); //provide client with (static) stylesheets
+// app.use('/scripts', express.static(__dirname + '/scripts')); //provide client with (static) scripts
 
 //intermediary session definition to allow socketio to handle express sessions
 sessionDef = session({
@@ -344,7 +345,7 @@ gamesocket.on('connection', socket => {
 
     socket.on('name set', (name, errorback) => {
         //errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
-        if (rooms[roomToJoin].getMemberList.includes(name)) {
+        if (rooms[roomToJoin].getMemberList().includes(name)) {
             errorback('That name is already in use in this game')
         }
         else {
@@ -377,7 +378,7 @@ gamesocket.on('connection', socket => {
         if (rooms[roomToJoin].members[SESSION_ID]) {
             let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username)
             rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
-            console.log('message in room ' + roomToJoin + ':' + content); //print the chat message event
+            console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
             gamesocket.in(roomToJoin).emit('new chat', message); //send message to everyone in room
         }
     });
