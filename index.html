@@ -23,7 +23,8 @@
 				if ($('#isPublic').val() == 'private') {
 					isPublic = false;
 				}
-				socket.emit('room create', [$('#lobbyName').val(), isPublic]);
+				socket.emit('room create', [$('#lobbyName').val(), isPublic, $('#username').val()]);
+
 				$('#lobbyName').val('');
 				return false;
 			});
