@@ -305,7 +305,6 @@ homesocket.on('connection', socket => {
 		isPublic = room_info[1];
 		username = room_info[2];
 
-		// ===== Room Arrangements =====
 		if (!(roomName.length > 0 && roomName.length < 33)) {
 			socket.emit('warning', 'Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(roomName)) {
@@ -318,18 +317,14 @@ homesocket.on('connection', socket => {
 			if (isPublic) {
 				public_rooms[roomName] = room.code;
 			}
-			console.log('a new room has been created: ' + [roomName, isPublic]);
+
+			// Adds the inital user to the room
+			rooms[room.code].addPlayer(socket.id, socket.request.session.id, username);
+
+			console.log(rooms[room.code].getMemberList());
 
 			socket.emit('room created', room.code); //tell the client a new room has been created and give them the URL to it
 		}
-
-		// ===== Name Arrangements =====
-		let roomToJoin = socket.handshake.headers.referer
-			.toString()
-			.split('/')
-			.pop()
-			.substr(0, 8);
-		console.log(roomToJoin);
 	});
 });
 
