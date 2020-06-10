@@ -68,6 +68,37 @@
                 }
                 privateChatUL.append(new_message);
             });
+
+            // Reception of client package; This will eventually be a pretty large function, handling most aspects of the game
+            socket.on('room update', (config) => {
+                // TODO: populate player list
+                // TODO: refresh chat history
+                if (config.game == null) {
+                    $('#actionBox').empty();
+                    if (config.isHost) {
+                        //actions = start game options
+                        $('#actionBox').append(
+                            $('.hostActions').clone().removeClass('d-none')
+                        );
+                    }
+                }
+                // else 
+            })
+
+            // Starting a new game
+            $('#actionBox').on('submit', '.beginGameForm', function(e) {
+                console.log('startin game')
+                e.preventDefault(); //dont refresh page
+                let game_setup_info = {
+                    mafia: parseInt($('#actionBox .numMafia').val()),
+                    sheriffs: parseInt($('#actionBox .numSheriff').val()),
+                    doctors: parseInt($('#actionBox .numDoctor').val())
+                }
+                console.log(game_setup_info)
+                socket.emit('game start', game_setup_info, function(errormsg) {
+                    $('#actionBox .startgameerror').text(errormsg);
+                });
+            })
         });
     </script>
 	<body class="h-100">
@@ -168,37 +199,61 @@
                     <div class="row h-75 mh-75 border">
                         <div class="col-7 mh-100 border">
                             <h3>Actions</h3>
-                            <h4>Select who to kill</h4>
-                            <div class="card-columns" style="column-count: 3">
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 1</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 2</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 3</div>
-                                </div>
-                                <div class="card bg-danger">
-                                    <div class="card-body p-2">Player 4</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 6</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 7</div>
-                                </div>
+                            <div class="d-none hostActions">
+                                <p class="lead">Game Setup</p>
+                                <form class="beginGameForm">
+                                    <div class="form-inline pb-2">
+                                        <label>How many mafia?</label>
+                                        <input class="form-control ml-auto numMafia" type="number" min="1">
+                                    </div>
+                                    <div class="form-inline pb-2">
+                                        <label>How many sheriffs?</label>
+                                        <input class="form-control ml-auto numSheriff" type="number" min="1">
+                                    </div>
+                                    <div class="form-inline pb-2">
+                                        <label>How many doctors?</label>
+                                        <input class="form-control ml-auto numDoctor" type="number" min="1">
+                                    </div>
+                                    <div class="form-group pb-2 text-center">
+                                        <input class="form-control btn btn-success w-25" type="submit" value="Start Game">
+                                        <p class="startgameerror text-danger"></p>
+                                    </div>
+                                </form>
                             </div>
-                            <input id="confirmationBox" class="btn btn-success" type="checkbox">
-                            <label>Confirm</label>
-                            <p>Confirmed: <span>(<span id="count">0</span>/2)</span></p>
-                            <script>
-                                $(function() {
-                                    $('#confirmationBox').on('change',function(){
-                                        $(this).is(':checked') ? $('#count').text('1') : $('#count').text('0');
-                                    });
-                                })
-                            </script>
+                            <div id="actionBox">
+                                <!-- Example action box content -->
+                                <!-- <h4>Select who to kill</h4>
+                                <div class="card-columns" style="column-count: 3">
+                                    <div class="card bg-info">
+                                        <div class="card-body p-2">Player 1</div>
+                                    </div>
+                                    <div class="card bg-info">
+                                        <div class="card-body p-2">Player 2</div>
+                                    </div>
+                                    <div class="card bg-info">
+                                        <div class="card-body p-2">Player 3</div>
+                                    </div>
+                                    <div class="card bg-danger">
+                                        <div class="card-body p-2">Player 4</div>
+                                    </div>
+                                    <div class="card bg-info">
+                                        <div class="card-body p-2">Player 6</div>
+                                    </div>
+                                    <div class="card bg-info">
+                                        <div class="card-body p-2">Player 7</div>
+                                    </div>
+                                </div>
+                                <input id="confirmationBox" class="btn btn-success" type="checkbox">
+                                <label>Confirm</label>
+                                <p>Confirmed: <span>(<span id="count">0</span>/2)</span></p>
+                                <script>
+                                    $(function() {
+                                        $('#confirmationBox').on('change',function(){
+                                            $(this).is(':checked') ? $('#count').text('1') : $('#count').text('0');
+                                        });
+                                    })
+                                </script> -->
+                            </div>
                         </div>
                         <div class="col-5 mh-100">
                             <div class="row h-25 mh-25 border">

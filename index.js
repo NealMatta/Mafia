@@ -311,7 +311,7 @@ homesocket.on('connection', socket => {
 			socket.emit('warning', 'Room with this name already exists.');
 		} else {
 			//name is valid; make the room.
-			room = new Room(roomName, isPublic);
+			room = new Room(roomName, isPublic, socket.request.session.id);
 			room.chatHistory.push(new Message('INVITE LINK: ' + url + room.code));
 			rooms[room.code] = room; //add this room to the catalog of all rooms
 			if (isPublic) {
@@ -344,7 +344,9 @@ gamesocket.on('connection', socket => {
 	if (Object.keys(rooms).includes(roomToJoin)) {
 		//if the room exists...
 		//put the user in a socket room for the particular game room they're trying to enter
-		socket.join(roomToJoin);
+        socket.join(roomToJoin);
+        //provide user with all needed room information
+		socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
 		//check if a game has begun
 		if (rooms[roomToJoin].game != null) {
 			//check if the user is part of the game, in which case this is a reconnection
@@ -362,8 +364,6 @@ gamesocket.on('connection', socket => {
 					new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.')
 				);
 				gamesocket.to(roomToJoin).emit('new chat', time_appended_msg); //push message to everyone else in room
-				//provide user with all needed room information
-				socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
 			}
 			//if they're not part of the game, add them as spectator //currently should not be implemented because Game doesn't support spectators that well yet
 		}
@@ -379,11 +379,12 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('game start', (options, errorback) => {
+        console.log(options)
 		//options should be {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
 		if (Object.keys(rooms[roomToJoin].members).length <= 4) {
 			errorback('There must be at least four players to start a game');
-		} else if (options.mafia + options.sheriffs + options.doctors > Object.keys(rooms[roomToJoin].members).length) {
+		} else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');
 		} else {
 			//create new game
