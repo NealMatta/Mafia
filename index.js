@@ -76,12 +76,14 @@ homesocket.on('connection', socket => {
 			room = new Room(roomName, isPublic);
 			room.chatHistory.push(new Message('INVITE LINK: ' + url + room.code));
 			rooms[room.code] = room; // Add room to catalog of all rooms
+
 			if (isPublic) {
 				public_rooms[roomName] = room.code;
 			}
 
 			// Add inital user to room
 			rooms[room.code].addPlayer(socket.id, socket.request.session.id, username);
+
 			// Tell the client a new room has been created and give them the URL to it
 			socket.emit('room created', room.code);
 		}
@@ -134,6 +136,7 @@ gamesocket.on('connection', socket => {
 		if (rooms[roomToJoin].getMemberList().includes(name)) {
 			errorback('That name is already in use in this game');
 		} else {
+			console.log(rooms[roomToJoin].members[SESSION_ID]);
 			rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
 		}
 	});
@@ -166,8 +169,6 @@ gamesocket.on('connection', socket => {
 	socket.on('public message', text => {
 		//ensure sender is part of the room, meaning they've assigned themselves a name
 		if (rooms[roomToJoin].members[SESSION_ID]) {
-			console.log(rooms[roomToJoin].getMemberList());
-
 			let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username);
 			rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
 			console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
