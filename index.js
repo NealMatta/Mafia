@@ -69,9 +69,9 @@ homesocket.on('connection', socket => {
 
 		// Validating Room
 		if (!(roomName.length > 0 && roomName.length < 33)) {
-			socket.emit('warning', 'Room names must be 1-32 characters.');
+            errorback('Room names must be 1-32 characters.')           
 		} else if (Object.keys(public_rooms).includes(roomName)) {
-			socket.emit('warning', 'Room with this name already exists.');
+            errorback('Room with this name already exists.')
 		} else {
 			//name is valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
