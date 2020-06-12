@@ -77,24 +77,22 @@
                 $('#playersContainer').empty();
                 $('#teammateContainer').empty();
                 
-                // TODO: refresh chat history
-                // privateChatUL.empty();
                 publicChatUL.empty();
                 for (var m=0; m<config.chatHistory.length; m++) {
                     let message = config.chatHistory[m]
                     let new_message = $('<li class="list-group-item">').text(message.content);
                     if (message.type == 'Public') {
-                        new_message.addClass('text-primary public_message'); // Could add custom css for color/bold/italic/whatever
+                        new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
                     }
                     else { //type == 'System'
-                        new_message.addClass('text-dark system_message'); // Could add custom css for color/bold/italic/whatever
+                        new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
                     }
                     publicChatUL.append(new_message);
                 }
 
                 // Pregame stuff
                 if (config.game == null) {
-                    //populate player list
+                    //populate player list with all in room
                     for (var u=0; u<config.users_present.length; u++) {
                         $('#playersContainer').append(
                             $('<div class="card bg-info">').append(
@@ -117,7 +115,43 @@
                         );
                     }
                 }
-                // else 
+                else {
+                    //enable private chat
+                    $('#sendPrvMsg input').attr('disabled','false');
+
+                    //populate player list with those in game
+                    for (var u=0; u<config.game.players.length; u++) {
+                        config.game.players[u].isDead
+                            ? $('#playersContainer').append(
+                                $('<div class="card bg-dark">').append(
+                                    $('<div class="card-body p-2">').text(
+                                        config.game.players[u].username
+                                    )
+                                )
+                            )
+                            : $('#playersContainer').append(
+                                $('<div class="card bg-info">').append(
+                                    $('<div class="card-body p-2">').text(
+                                        config.game.players[u].username
+                                    )
+                                )
+                            );
+                    }
+
+                    //refresh private chat log
+                    privateChatUL.empty();
+                    for (var m=0; m<config.game.me.privateLog.length; m++) {
+                        let message = config.game.me.privateLog[m]
+                        let new_message = $('<li class="list-group-item">').text(message.content);
+                        if (message.type == 'Private') {
+                            new_message.addClass('text-success private_message'); // Could add custom css for color/bold/italic/whatever
+                        }
+                        else { //type == 'System'
+                            new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
+                        }
+                        publicChatUL.append(new_message);
+                    }
+                } 
             })
 
             // Starting a new game

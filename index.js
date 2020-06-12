@@ -75,7 +75,8 @@ homesocket.on('connection', socket => {
 		} else {
 			//name is valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
-			room.chatHistory.push(new Message('INVITE LINK: ' + url + room.code));
+            room.chatHistory.push(new Message(username + ' created the room.'));
+            room.chatHistory.push(new Message('Invite Link: ' + url + room.code));
 			rooms[room.code] = room; // Add room to catalog of all rooms
 
 			if (isPublic) {
@@ -150,7 +151,7 @@ gamesocket.on('connection', socket => {
         console.log(options)
 		//options should be {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
-		if (Object.keys(rooms[roomToJoin].members).length <= 4) {
+		if (Object.keys(rooms[roomToJoin].members).length < 1) {
 			errorback('There must be at least four players to start a game');
 		} else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');
