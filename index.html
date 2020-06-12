@@ -46,13 +46,13 @@
 				window.open(url, '_self');
 			});
 		});
-	</script>
+    </script>
 
-	<body>
+	<body class="">
 		<div class="min-vh-100">
-			<div class="container pt-3">
+			<div class="container mt-3">
 				<div class="row p-0">
-                    <div class="col-6 p-3 border">
+                    <div class="col-6 p-3 border border-dark rounded-lg">
                         <h1 class="display-3">MAFIA</h1>
                         <h4>Online multiplayer party game</h4>
                         <p class="lead">Instructions</p>
@@ -62,28 +62,32 @@
                         <p>Built by NM & AK</p>
                     </div>
 					<div class="col-6">
-                        <div class="row border p-3">
+                        <div class="row ml-3 mr-3 mb-3 pt-3 border border-dark rounded-lg">
                             <div class="col">
-                                <h2>Open Public Games</h2>
+                                <h2>Open Public Lobbies</h2>
                                 <form id="joinGame">
-                                    <ul id="game_list" class="list-group list-group-flush m-2 border overflow-auto" style="height:300px">
-                                        <li class="list-group-item">Some game</li>
-                                        <li class="list-group-item">Gang Gang</li>
-                                        <li class="list-group-item">Hello world</li>
-                                    </ul>
-                                    <input class="form-control btn btn-primary w-50" type="submit" value="Join Game">
+                                    <div class="form-group">
+                                        <ul id="game_list" class="list-group list-group-flush m-2 overflow-auto border" style="height:300px">
+                                            <li class="list-group-item">Some game</li>
+                                            <li class="list-group-item">Gang Gang</li>
+                                            <li class="list-group-item">Hello world</li>
+                                        </ul>
+                                    </div>
+                                    <div class="form-group text-center">
+                                        <input class="btn btn-dark rounded-pill w-50" type="submit" value="Join Lobby">
+                                    </div>
                                 </form>
                             </div>
                         </div>
-                        <div class="row border p-3">
+                        <div class="row ml-3 mr-3 pt-3 border border-dark rounded-lg">
                             <div class="col">
                                 <h2>Start a New Game</h2>
 								<form id="createLobby">
                                     <div class="form-group">
-                                        <input class="form-control" id="username" placeholder="Username" />
+                                        <input class="form-control" id="username" placeholder="Username" minlength="1" maxlength="24" />
                                     </div>
                                     <div class="form-group">
-                                        <input class="form-control" id="lobbyName" placeholder="Room Name" />
+                                        <input class="form-control" id="lobbyName" placeholder="Room Name" minlength="1" />
                                     </div>
                                     <div class="form-group">
                                         <select class="form-control" id="isPublic">
@@ -91,8 +95,8 @@
                                             <option value="private">Private</option>
                                         </select>
                                     </div>
-									<div class="form-group">
-										<input class="form-control btn btn-primary w-50" type="submit" value="Create New Lobby">
+									<div class="form-group text-center">
+										<input class="btn btn-dark rounded-pill w-50" type="submit" value="Start New Lobby">
 									</div>
 								</form>
                             </div>
