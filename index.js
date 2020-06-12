@@ -6,6 +6,7 @@ var session = require('express-session');
 
 const Room = require('./js/room');
 const Message = require('./js/message');
+const { info } = require('console');
 const url = 'localhost:69/'; //big dreams of a .com one day
 const port = 69; // port for hosting site on local system. will probably be invalidated once hosted elsewhere.
 
@@ -58,21 +59,25 @@ io.use(function(socket, next) {
 homesocket.on('connection', socket => {
 	//what to do upon a new user appearing
 	console.log('a user connected to homepage');
-	// console.log('session id: ' + socket.request.session.id); //unique user identifier
+
+    // Note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
+	let SESSION_ID = socket.request.session.id;
 
 	// Give user list of open public games
 	socket.emit('populate rooms', Object.keys(public_rooms));
 
-	socket.on('room create', room_info => {
+	socket.on('room create', (room_info, errorback) => {
 		// Names have to be unique and at least one character. arbitrary max of 32
-		[roomName, isPublic, username] = room_info;
+		let [roomName, isPublic, username] = room_info;
 
 		// Validating Room
 		if (!(roomName.length > 0 && roomName.length < 33)) {
             errorback('Room names must be 1-32 characters.')           
-		} else if (Object.keys(public_rooms).includes(roomName)) {
+        }
+        else if (Object.keys(public_rooms).includes(roomName)) {
             errorback('Room with this name already exists.')
-		} else {
+        }
+        else {
 			//name is valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
             room.chatHistory.push(new Message(username + ' created the room.'));
@@ -87,9 +92,41 @@ homesocket.on('connection', socket => {
 			rooms[room.code].addPlayer(socket.id, socket.request.session.id, username);
 
 			// Tell the client a new room has been created and give them the URL to it
-			socket.emit('room created', room.code);
+			socket.emit('send to room', room.code);
 		}
-	});
+    });
+    
+    socket.on('join via name', (info, errorback) => {
+        let [roomName, username] = info;
+        if (!(Object.keys(public_rooms).includes(roomName))) {
+            errorback('Error joining session. Please refresh and try again.')
+        }
+        else if (rooms[public_rooms[roomName]].getMemberList().includes(username)) {
+            errorback('That username is already in use in this lobby.')
+        }
+        else {
+            //name and session are valid; join the room
+            rooms[public_rooms[roomName]].addPlayer(socket.id, SESSION_ID, username)
+            socket.emit('send to room', rooms[public_rooms[roomName]].code)
+        }
+    });
+    
+    socket.on('join via code', (info, errorback) => {
+        let [roomCode, username] = info;
+        if (rooms[roomCode]) {
+            if (rooms[roomCode].getMemberList().includes(username)) {
+                errorback('That username is already in use in that lobby.')
+            }
+            else {
+                //name and session are valid; join the room
+                rooms[roomCode].addPlayer(socket.id, SESSION_ID, username)
+                socket.emit('send to room', roomCode)
+            }
+        }
+        else {
+            errorback('Invalid room code.')
+        }
+    });
 });
 
 gamesocket.on('connection', socket => {
