@@ -131,7 +131,10 @@ gamesocket.on('connection', socket => {
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
 		}
-	}
+    }
+    else {
+        // kick user from the room somehow
+    }
 
 	socket.on('name set', (name, errorback) => {
 		//errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
@@ -158,7 +161,8 @@ gamesocket.on('connection', socket => {
 				options.mafia,
 				options.sheriff,
 				options.doctor
-			);
+            );
+            rooms[roomToJoin].chatHistory.push(new Message('New Game Started'));
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
 			for (session_id in rooms[roomToJoin].socket_session_link) {
@@ -193,7 +197,8 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('disconnect', () => {
-		//if still in pregame stage, remove player from room membership
+        if (Object.keys(rooms).includes(roomToJoin)) {
+            //if still in pregame stage, remove player from room membership
 		if (rooms[roomToJoin].game == null) {
 			rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
 		}
@@ -203,7 +208,8 @@ gamesocket.on('connection', socket => {
 			rooms[roomToJoin].chatHistory.push(msg);
 			gamesocket.in(roomToJoin).emit('new chat', msg);
 		}
-		console.log('user disconnected w socket id:' + socket.id);
+        }
+		console.log('user disconnected from gamepage w socket id:' + socket.id);
 	});
 });
 

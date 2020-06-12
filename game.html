@@ -71,9 +71,44 @@
 
             // Reception of client package; This will eventually be a pretty large function, handling most aspects of the game
             socket.on('room update', (config) => {
-                // TODO: populate player list
+                $('#roomName').text(config.roomname);
+                //$('#roomCode').text(config.roomcode.split('game')[1]);
+                $('#userName').text(config.myname);
+                $('#playersContainer').empty();
+                $('#teammateContainer').empty();
+                
                 // TODO: refresh chat history
+                // privateChatUL.empty();
+                publicChatUL.empty();
+                for (var m=0; m<config.chatHistory.length; m++) {
+                    let message = config.chatHistory[m]
+                    let new_message = $('<li class="list-group-item">').text(message.content);
+                    if (message.type == 'Public') {
+                        new_message.addClass('text-primary public_message'); // Could add custom css for color/bold/italic/whatever
+                    }
+                    else { //type == 'System'
+                        new_message.addClass('text-dark system_message'); // Could add custom css for color/bold/italic/whatever
+                    }
+                    publicChatUL.append(new_message);
+                }
+
+                // Pregame stuff
                 if (config.game == null) {
+                    //populate player list
+                    for (var u=0; u<config.users_present.length; u++) {
+                        $('#playersContainer').append(
+                            $('<div class="card bg-info">').append(
+                                $('<div class="card-body p-2">').text(
+                                    config.users_present[u]
+                                )
+                            )
+                        )
+                    }
+
+                    //disable private chat
+                    $('#sendPrvMsg input').attr('disabled','true');
+
+                    //give host start-game options
                     $('#actionBox').empty();
                     if (config.isHost) {
                         //actions = start game options
@@ -105,7 +140,9 @@
 		<div class="container-fluid h-100 p-4">
 			<div class="row h-100">
 			    <div class="col-3 mh-100 border d-flex flex-column">
-                    <h1>MAFIA</h1>
+                    <h1 class="m-0">MAFIA</h1>
+                    <p class="lead m-0">Room Name: <span id="roomName"></span></p>
+                    <p class="lead m-0">Room Code: <span id="roomCode"></span></p>
                     <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
                         <ul id="publicChat" class="list-group list-group-flush">
                             <li class="list-group-item">Hello World First</li>
@@ -168,7 +205,7 @@
                     <div class="row h-25 mh-25 overflow-auto border">
                         <div class="col">
                             <h3>Players</h3>
-                            <div class="card-columns" style="column-count: 6">
+                            <div id="playersContainer" class="card-columns" style="column-count: 6">
                                 <div class="card bg-info">
                                     <div class="card-body p-2">Player 1</div>
                                 </div>
@@ -258,8 +295,8 @@
                         <div class="col-5 mh-100">
                             <div class="row h-25 mh-25 border">
                                 <div class="col">
-                                    <h3>Your Role: <span>Player 2</span>, <span>Mafia</span></h3>
-                                    <div class="card-columns" style="column-count: 3">
+                                    <h3>You: <span id="userName"></span> Role: <span id="userRole">N/A</span></h3>
+                                    <div id="teammateContainer" class="card-columns" style="column-count: 3">
                                         <div class="card bg-info">
                                             <div class="card-body p-2">Player 2</div>
                                         </div>
