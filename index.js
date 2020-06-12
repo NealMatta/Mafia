@@ -38,10 +38,10 @@ app.get('/', (req, res) => {
 app.get('/game*', (req, res) => {
 	//note: in this context, req.session refers to same object as socket.request.session in socket context. unsure if by value or reference
 	if (Object.keys(rooms).includes(req.path.substr(1))) {
-		console.log('user accessing game page.');
+		console.log('user accessing game page via: ' + req.path);
 		res.sendFile(__dirname + '/game.html');
 	} else {
-		res.send('<h1>Sorry, that is an invalid game session.</h1>');
+		res.send('<h1>Sorry, that is an invalid game session.</h1><h2><a href="' + url + '">Return to homepage</h2>');
 	}
 });
 
@@ -134,7 +134,7 @@ homesocket.on('connection', socket => {
             }
         }
         else {
-            errorback('Invalid room code.')
+            errorback('No room exists with that code.')
         }
     });
 });
@@ -181,7 +181,7 @@ gamesocket.on('connection', socket => {
 		}
     }
     else {
-        // kick user from the room somehow
+        socket.close();
     }
 
 	socket.on('name set', (name, errorback) => {
