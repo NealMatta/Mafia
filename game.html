@@ -115,7 +115,7 @@
                         );
                     }
                 }
-                else {
+                else { //there is an ongoing game
                     //enable private chat
                     $('#sendPrvMsg input').attr('disabled','false');
 
@@ -151,6 +151,40 @@
                         }
                         publicChatUL.append(new_message);
                     }
+
+                    //fill user role
+                    $('#userRole').text(config.game.me.role)
+
+                    //populate rolemates
+                    for (var u=0; u<config.game.teammates.length; u++) {
+                        $('#teammateContainer').append(
+                            $('<div class="card bg-info">').append(
+                                $('<div class="card-body p-2">').text(
+                                    config.game.teammates[u]
+                                )
+                            )
+                        );
+                    }
+
+                    //action box stuff
+                    let action_choices = $('<div class="card-columns" style="column-count: 3">');
+                    for (var player in config.game.actions.choices) {
+                        action_choices.append(
+                            $('<div class="card bg-info">').append(
+                                $('<div class="card-body p-2">').text(
+                                    config.game.actions.choices[player].username
+                                )
+                            )
+                        );
+                    }
+                    $('#actionBox')
+                        .empty()
+                        .append($('<h4>').text(config.game.actions.prompt))
+                        .append(action_choices)
+                        .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
+                        .append($('<label>').text('Confirm'))
+                        .append($('<p>').text('Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
+                    //TODO: socket events for checking confirm. server should handle tracking and distributing who is clicked and how many are confirmed until unanimity (or just majority?)
                 } 
             })
 

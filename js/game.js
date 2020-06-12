@@ -102,8 +102,8 @@ class Game {
 					//villagers
 					return {
 						prompt: '',
-						choices: {},
-						teammates: {},
+						choices: [],
+						teammates: [],
 					};
 					break;
 			}
