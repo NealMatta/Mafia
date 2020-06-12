@@ -113,7 +113,16 @@ homesocket.on('connection', socket => {
     });
     
     socket.on('join via code', (info, errorback) => {
-        let [roomCode, username] = info;
+        let [input, username] = info;
+        if (input.length == 4) {
+            let roomCode = 'game'+input.toUpperCase();
+        }
+        else if (input.length == 8) {
+            let roomCode = input.toUpperCase();
+        }
+        else {
+            errorback('Invalid room code.')
+        }
         if (rooms[roomCode]) {
             if (rooms[roomCode].getMemberList().includes(username)) {
                 errorback('That username is already in use in that lobby.')
