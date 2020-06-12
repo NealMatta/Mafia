@@ -79,7 +79,8 @@ homesocket.on('connection', socket => {
         }
         else {
 			//name is valid; make the room.
-			room = new Room(roomName, isPublic, socket.request.session.id);
+            room = new Room(roomName, isPublic, socket.request.session.id);
+            console.log('new room created with code ' + room.code)
             room.chatHistory.push(new Message(username + ' created the room.'));
             room.chatHistory.push(new Message('Invite Link: ' + url + room.code));
 			rooms[room.code] = room; // Add room to catalog of all rooms
@@ -212,26 +213,43 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('public message', text => {
-		//ensure sender is part of the room, meaning they've assigned themselves a name
+        //ensure sender is part of the room, meaning they've assigned themselves a name
+        //also ensure that message is not blank
 		if (rooms[roomToJoin].members[SESSION_ID]) {
-			let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username);
-			rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
-			console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
-			gamesocket.in(roomToJoin).emit('new chat', message); //send message to everyone in room
-		}
+            if (text.length > 0) {
+                let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username);
+			    rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
+			    console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
+			    gamesocket.in(roomToJoin).emit('new chat', message); //send message to everyone in room
+            }	
+        }
+        else {
+            console.log('illegal public message attempt from ' + socket.id + ' in room ' + roomToJoin);
+        }
 	});
 
 	socket.on('private message', msg => {
-		let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-		let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
-		console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
-		if (sender_role != 'Villager') {
-			//everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-			let message = rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg, 'Private');
-			gamesocket
-				.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
-				.emit('new private chat', message);
-		}
+        //ensure (1) game is in session (2) message is not blank (3) sender is eligible to send private msgs
+        if (rooms[roomToJoin].game != null) {
+            if (msg.length > 0) {
+                let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+                let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
+                //console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
+                if (sender_role != 'Villager') {
+                    //everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
+                    let message = rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg, 'Private');
+                    gamesocket
+                        .in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
+                        .emit('new private chat', message);
+                }
+                else {
+                    console.log('illegal private message attempt from villager ' + sender_name + ' in room ' + roomToJoin);
+                }
+            }
+        }
+        else {
+            console.log('illegal private message submission attempt from ' + socket.id);
+        }
 	});
 
 	socket.on('disconnect', () => {
