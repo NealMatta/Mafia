@@ -42,6 +42,7 @@ class Room {
 	//a singular object to send the client, containing pertinent info and nothing the client shouldn't have access to
 	clientPackage(sessionID) {
 		return {
+            myname: this.members[sessionID].username,
 			roomname: this.name,
 			roomcode: this.code,
 			chatHistory: this.chatHistory,

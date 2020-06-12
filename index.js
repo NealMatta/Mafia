@@ -73,8 +73,10 @@ homesocket.on('connection', socket => {
 		} else if (Object.keys(public_rooms).includes(roomName)) {
 			socket.emit('warning', 'Room with this name already exists.');
 		} else {
-			room = new Room(roomName, isPublic);
-			room.chatHistory.push(new Message('INVITE LINK: ' + url + room.code));
+			//name is valid; make the room.
+			room = new Room(roomName, isPublic, socket.request.session.id);
+            room.chatHistory.push(new Message(username + ' created the room.'));
+            room.chatHistory.push(new Message('Invite Link: ' + url + room.code));
 			rooms[room.code] = room; // Add room to catalog of all rooms
 
 			if (isPublic) {
@@ -104,9 +106,12 @@ gamesocket.on('connection', socket => {
 
 	// Check if the room still exists
 	if (Object.keys(rooms).includes(roomToJoin)) {
-		// If room exists, put user in socket room for particular game room they're trying to enter
-		socket.join(roomToJoin);
-		// Check if a game has begun
+		//if the room exists...
+		//put the user in a socket room for the particular game room they're trying to enter
+        socket.join(roomToJoin);
+        //provide user with all needed room information
+		socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
+		//check if a game has begun
 		if (rooms[roomToJoin].game != null) {
 			// Check if the user is part of the game, in which case this is a reconnection
 			if (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) {
@@ -123,13 +128,14 @@ gamesocket.on('connection', socket => {
 					new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.')
 				);
 				gamesocket.to(roomToJoin).emit('new chat', time_appended_msg); //push message to everyone else in room
-				//provide user with all needed room information
-				socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
 			}
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
 		}
-	}
+    }
+    else {
+        // kick user from the room somehow
+    }
 
 	socket.on('name set', (name, errorback) => {
 		//errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
@@ -142,11 +148,12 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('game start', (options, errorback) => {
+        console.log(options)
 		//options should be {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
-		if (Object.keys(rooms[roomToJoin].members).length <= 4) {
+		if (Object.keys(rooms[roomToJoin].members).length < 1) {
 			errorback('There must be at least four players to start a game');
-		} else if (options.mafia + options.sheriffs + options.doctors > Object.keys(rooms[roomToJoin].members).length) {
+		} else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');
 		} else {
 			//create new game
@@ -155,7 +162,8 @@ gamesocket.on('connection', socket => {
 				options.mafia,
 				options.sheriff,
 				options.doctor
-			);
+            );
+            rooms[roomToJoin].chatHistory.push(new Message('New Game Started'));
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
 			for (session_id in rooms[roomToJoin].socket_session_link) {
@@ -190,7 +198,8 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('disconnect', () => {
-		//if still in pregame stage, remove player from room membership
+        if (Object.keys(rooms).includes(roomToJoin)) {
+            //if still in pregame stage, remove player from room membership
 		if (rooms[roomToJoin].game == null) {
 			rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
 		}
@@ -200,7 +209,8 @@ gamesocket.on('connection', socket => {
 			rooms[roomToJoin].chatHistory.push(msg);
 			gamesocket.in(roomToJoin).emit('new chat', msg);
 		}
-		console.log('user disconnected w socket id:' + socket.id);
+        }
+		console.log('user disconnected from gamepage w socket id:' + socket.id);
 	});
 });
 
