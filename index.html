@@ -29,9 +29,15 @@
 				return false;
 			});
 			socket.on('populate rooms', roomnames => {
-				for (i in roomnames) {
-					$('#game_list').append($('<li>').text(roomnames[i]));
-				}
+                $('#game_list').empty();
+                if (roomnames.length==0) {
+                    $('#game_list').append($('<span class="list-group-item">').text('No public games found'));
+                }
+                else {
+                    for (var i in roomnames) {
+					    $('#game_list').append($('<li class="list-group-item">').text(roomnames[i]));
+				    }
+                }
 			});
 			socket.on('warning', warning => {
 				$('#warning').text(warning);
@@ -40,100 +46,57 @@
 				window.open(url, '_self');
 			});
 		});
-
-		function toggleNewJoin() {
-			var newNav = document.getElementById('newNav');
-			var joinNav = document.getElementById('joinNav');
-			var newGame = document.getElementById('newGame');
-			var joinGame = document.getElementById('joinGame');
-
-			newNav.classList.toggle('active');
-			joinNav.classList.toggle('active');
-			newGame.classList.toggle('invisible');
-			joinGame.classList.toggle('invisible');
-		}
 	</script>
 
-	<style>
-		body {
-			background: #d4d4d4;
-		}
-		.bs-example {
-			border: solid 1px rgb(63, 63, 63);
-			border-radius: 10px;
-			background: white;
-			padding: 3% !important;
-		}
-		.invisible {
-			display: none;
-		}
-	</style>
-
 	<body>
-		<div class="d-flex align-items-center min-vh-100">
-			<div class="container">
-				<div class="row justify-content-center">
-					<div class="col-8 bs-example">
-						<ul class="nav nav-pills nav-fill">
-							<li class="nav-item">
-								<a onclick="toggleNewJoin()" href="#" id="newNav" class="nav-link active">New Game</a>
-							</li>
-							<li class="nav-item">
-								<a onclick="toggleNewJoin()" href="#" id="joinNav" class="nav-link">Join Game</a>
-							</li>
-						</ul>
-						<div id="newGame">
-							<div class="container">
-								<h1>Start a new game</h1>
+		<div class="min-vh-100">
+			<div class="container pt-3">
+				<div class="row p-0">
+                    <div class="col-6 p-3 border">
+                        <h1 class="display-3">MAFIA</h1>
+                        <h4>Online multiplayer party game</h4>
+                        <p class="lead">Instructions</p>
+                        <p>Jump right in by joining an open game or start a new public game and wait for others to join.</p>
+                        <p>You can also create a private game just for you and your friends.</p>
+                        <p class="lead">About</p>
+                        <p>Built by NM & AK</p>
+                    </div>
+					<div class="col-6">
+                        <div class="row border p-3">
+                            <div class="col">
+                                <h2>Open Public Games</h2>
+                                <form id="joinGame">
+                                    <ul id="game_list" class="list-group list-group-flush m-2 border overflow-auto" style="height:300px">
+                                        <li class="list-group-item">Some game</li>
+                                        <li class="list-group-item">Gang Gang</li>
+                                        <li class="list-group-item">Hello world</li>
+                                    </ul>
+                                    <input class="form-control btn btn-primary w-50" type="submit" value="Join Game">
+                                </form>
+                            </div>
+                        </div>
+                        <div class="row border p-3">
+                            <div class="col">
+                                <h2>Start a New Game</h2>
 								<form id="createLobby">
-									<div class="form-row">
-										<div class="form-group col-8">
-											<input class="form-control" id="lobbyName" placeholder="Room Name" />
-										</div>
-									</div>
-									<div class="form-row">
-										<div class="form-group col-8">
-											<input class="form-control" id="username" placeholder="Username" />
-										</div>
-									</div>
-									<div class="form-row">
-										<div class="form-group col-8">
-											<select class="form-control" id="isPublic">
-												<option value="public">Public</option>
-												<option value="private">Private</option>
-											</select>
-										</div>
-									</div>
-									<div class="form-row">
-										<button class="btn btn-primary" type="submit" value="Create New Lobby">
-											Submit form
-										</button>
+                                    <div class="form-group">
+                                        <input class="form-control" id="username" placeholder="Username" />
+                                    </div>
+                                    <div class="form-group">
+                                        <input class="form-control" id="lobbyName" placeholder="Room Name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <select class="form-control" id="isPublic">
+                                            <option value="public">Public</option>
+                                            <option value="private">Private</option>
+                                        </select>
+                                    </div>
+									<div class="form-group">
+										<input class="form-control btn btn-primary w-50" type="submit" value="Create New Lobby">
 									</div>
 								</form>
-							</div>
-						</div>
-						<div id="joinGame" class="invisible">
-							<div class="container">
-								<div class="row">
-									<div class="col-6">
-										<h2>Open public lobbies</h2>
-
-										<ul id="game_list" class="list-group list-group-flush">
-											<li class="list-group-item">Some game</li>
-											<li class="list-group-item">Gang Gang</li>
-											<li class="list-group-item">Hello world</li>
-										</ul>
-
-										<form>
-											<button>Join Game (unfunctional)</button>
-										</form>
-									</div>
-									<div class="col-6">
-										<h2>Join Private Game</h2>
-									</div>
-								</div>
-							</div>
-						</div>
+                            </div>
+                        </div>
 					</div>
 				</div>
 			</div>
