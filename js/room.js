@@ -45,7 +45,7 @@ class Room {
         // options: [public chat, private chat, players, actions, room info, self info]
         // e.g. input: [false, false, false, true, false, true] will destroy & rebuild client action box and self info, nothing else
 		return {
-            should_reconstruct = reconstruction_parameters,
+            should_reconstruct: reconstruction_parameters,
             myname: this.members[sessionID].username,
 			roomname: this.name,
 			roomcode: this.code,
