@@ -195,10 +195,9 @@ gamesocket.on('connection', socket => {
 	});
 
 	socket.on('game start', (options, errorback) => {
-        console.log(options)
-		//options should be {mafia:integer, sheriffs:integer, doctors:integer}
+		//options is {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
-		if (Object.keys(rooms[roomToJoin].members).length < 1) {
+		if (Object.keys(rooms[roomToJoin].members).length < 4) {
 			errorback('There must be at least four players to start a game');
 		} else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');

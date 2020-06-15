@@ -56,11 +56,12 @@
                 }
                 else {
                     for (var i in roomnames) {
-					    $('#game_list').append($('<a href="#" class="list-group-item list-group-item-action"').text(roomnames[i]));
+					    $('#game_list').append($('<a href="#" class="list-group-item list-group-item-action">').text(roomnames[i]));
 				    }
                 }
 			});
-			socket.on('room created', url => {
+			socket.on('send to room', url => {
+                console.log('here')
 				window.open(url, '_self');
 			});
 		});
