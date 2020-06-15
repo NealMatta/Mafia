@@ -46,7 +46,7 @@
                     new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
                 }
                 else { //type == 'System'
-                    new_message.addClass('text-dark system_message'); // Could add custom css for color/bold/italic/whatever
+                    new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
                 }
                 publicChatUL.append(new_message);
             });
@@ -183,7 +183,7 @@
                         .append(action_choices)
                         .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
                         .append($('<label>').text('Confirm'))
-                        .append($('<p>').text('Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
+                        .append($('<p>Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
                     //TODO: socket events for checking confirm. server should handle tracking and distributing who is clicked and how many are confirmed until unanimity (or just majority?)
                 } 
             })

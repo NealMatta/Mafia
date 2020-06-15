@@ -1,4 +1,5 @@
 const Message = require('./message');
+const g = require('./global');
 
 class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
@@ -11,10 +12,10 @@ class Game {
 		this.playerkey = players; //holds original roles, for distribution in postgame
 		this.gamePhase = 'Day';
 		this.roleRoomCodes = {
-			Mafia: generateRoomCode(),
-			Sheriff: generateRoomCode(),
-			Doctor: generateRoomCode(),
-			Spectator: generateRoomCode(),
+			Mafia: g.generateRoomCode(),
+			Sheriff: g.generateRoomCode(),
+			Doctor: g.generateRoomCode(),
+			Spectator: g.generateRoomCode(),
 		};
 	}
 	assignRoles() {
@@ -24,15 +25,20 @@ class Game {
 		let part3 = Array(this.numMafia).fill('Mafia');
 		let part4 = Array(this.numVillagers).fill('Villager');
 		let roleLabels = part1.concat(part2, part3, part4);
-		let players = Object.keys(this.players); //list of session IDs
+		// [sherrify, doctor, mafia, villager, villager]
+		let playerSessionIDs = Object.keys(this.players); //list of session IDs
 		while (roleLabels.length != 0) {
-			//perform until no more labels to give/roles to assign
-			role = roleLabels[randomNumBetween(0, roleLabels.length - 1)];
-			player = players[randomNumBetween(0, players.length - 1)];
-			this.players[player].setRole(role);
-			delete players[player];
-			delete roleLabels[role];
+			// perform until no more labels to give/roles to assign
+            const role_index = g.randomNumBetween(0, roleLabels.length - 1);
+            console.log('randomly picked role ', role_index, ': ', roleLabels[role_index]);
+            const player_index = g.randomNumBetween(0, playerSessionIDs.length - 1);
+            const playerSessionID = playerSessionIDs[player_index];
+            console.log('randomly picked player: ', playerSessionID)
+            this.players[playerSessionID].setRole(roleLabels[role_index]);
+            playerSessionIDs.splice(player_index, 1);
+            roleLabels.splice(role_index, 1);
 		}
+		console.log('players', this.players)
 	}
 	getPlayerList(status = 'All') {
 		//return [{username: username, isDead: isDead},...]

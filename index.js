@@ -96,6 +96,7 @@ homesocket.on('connection', socket => {
 			// Add inital user to room
 			rooms[room.code].addPlayer(socket.id, socket.request.session.id, username);
 
+            // TODO: Make sure this happens synchronously
 			// Tell the client a new room has been created and give them the URL to it
 			socket.emit('send to room', room.code);
 		}
@@ -116,15 +117,16 @@ homesocket.on('connection', socket => {
 
 	socket.on('join via code', (info, errorback) => {
 		// BUG ALERT - Defining roomCode in the local scope. Probably will cause errors
+		let roomCode = null;
 		let [input, username] = info;
 		if (input.length == 4) {
-			let roomCode = 'game' + input.toUpperCase();
+			roomCode = 'game' + input.toUpperCase();
 		} else if (input.length == 8) {
-			let roomCode = input.toUpperCase();
+			roomCode = input.toUpperCase();
 		} else {
 			errorback('Invalid room code.');
 		}
-		// If it goes in the else statement, then roomCode will not exist
+
 		if (rooms[roomCode]) {
 			if (rooms[roomCode].getMemberList().includes(username)) {
 				errorback('That username is already in use in that lobby.');
@@ -156,7 +158,9 @@ gamesocket.on('connection', socket => {
 		//put the user in a socket room for the particular game room they're trying to enter
 		socket.join(roomToJoin);
 		//provide user with all needed room information
-		socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
+        socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
+        //update socket session link
+        rooms[roomToJoin].socket_session_link[SESSION_ID] = socket.id;
 		//check if a game has begun
 		if (rooms[roomToJoin].game != null) {
 			// Check if the user is part of the game, in which case this is a reconnection
@@ -169,11 +173,10 @@ gamesocket.on('connection', socket => {
 							rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]
 					); //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
 				}
-				//let room know about reconnection
-				rooms[roomToJoin].chatHistory.push(
-					new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.')
-				);
-				gamesocket.to(roomToJoin).emit('new chat', time_appended_msg); //push message to everyone else in room
+                //let room know about reconnection
+                let new_message = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
+				rooms[roomToJoin].chatHistory.push(new_message);
+				gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
 			}
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
@@ -203,19 +206,21 @@ gamesocket.on('connection', socket => {
 		) {
 			errorback('Too many roles have been assigned');
 		} else {
-			//create new game
+            //create new game
+            console.log(options);
 			rooms[roomToJoin].game = new Game(
 				rooms[roomToJoin].members,
 				options.mafia,
-				options.sheriff,
-				options.doctor
+				options.sheriffs,
+				options.doctors
 			);
 			rooms[roomToJoin].chatHistory.push(new Message('New Game Started'));
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
-			for (session_id in rooms[roomToJoin].socket_session_link) {
+			for (var session_id in rooms[roomToJoin].socket_session_link) {
+                console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
 				gamesocket
-					.to(socket_session_link[session_id])
+					.to(rooms[roomToJoin].socket_session_link[session_id])
 					.emit('room update', rooms[roomToJoin].clientPackage(session_id));
 			}
 		}
