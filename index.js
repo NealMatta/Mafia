@@ -41,7 +41,7 @@ app.get('/game*', (req, res) => {
 		console.log('user accessing game page via: ' + req.path);
 		res.sendFile(__dirname + '/game.html');
 	} else {
-		res.send('<h1>Sorry, that is an invalid game session.</h1><h2><a href="' + url + '">Return to homepage</h2>');
+		res.send('<h1>Sorry, that is an invalid game session.</h1><h2><a href="http://' + url + '">Return to homepage</a></h2>');
 	}
 });
 
@@ -140,14 +140,13 @@ homesocket.on('connection', socket => {
 });
 
 gamesocket.on('connection', socket => {
-	console.log('a user connected to game page');
 	// Parse, from the client url attempt, which room is being joined
 	let roomToJoin = socket.handshake.headers.referer
 		.toString()
 		.split('/')
 		.pop()
 		.substr(0, 8);
-
+    console.log('a user connected to game page: ' + roomToJoin);
 	// Note: in this context, socket.request.session refers to same object as req.session in express context. unsure if by value or reference
 	let SESSION_ID = socket.request.session.id;
 
@@ -181,7 +180,7 @@ gamesocket.on('connection', socket => {
 		}
     }
     else {
-        socket.close();
+        socket.disconnect();
     }
 
 	socket.on('name set', (name, errorback) => {
