@@ -72,7 +72,7 @@
             // Reception of client package; This will eventually be a pretty large function, handling most aspects of the game
             socket.on('room update', (config) => {
                 $('#roomName').text(config.roomname);
-                //$('#roomCode').text(config.roomcode.split('game')[1]);
+                $('#roomCode').text(config.roomcode.split('game')[1]);
                 $('#userName').text(config.myname);
                 $('#playersContainer').empty();
                 $('#teammateContainer').empty();
