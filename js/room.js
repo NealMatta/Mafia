@@ -40,8 +40,12 @@ class Room {
 		return to_return;
 	}
 	//a singular object to send the client, containing pertinent info and nothing the client shouldn't have access to
-	clientPackage(sessionID) {
+	clientPackage(sessionID, reconstruction_parameters) {
+        // reconstruction_parameters is a boolean vector detailing which parts of the client DOM should be reconstructed
+        // options: [public chat, private chat, players, actions, room info, self info]
+        // e.g. input: [false, false, false, true, false, true] will destroy & rebuild client action box and self info, nothing else
 		return {
+            should_reconstruct = reconstruction_parameters,
             myname: this.members[sessionID].username,
 			roomname: this.name,
 			roomcode: this.code,

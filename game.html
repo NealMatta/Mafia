@@ -69,128 +69,145 @@
                 privateChatUL.append(new_message);
             });
 
-            // Reception of client package; This will eventually be a pretty large function, handling most aspects of the game
+            // Reception of client package with rebuild instructions; This will eventually be a pretty large function, handling most aspects of the game
             socket.on('room update', (config) => {
-                $('#roomName').text(config.roomname);
-                $('#roomCode').text(config.roomcode.split('game')[1]);
-                $('#userName').text(config.myname);
-                $('#playersContainer').empty();
-                $('#teammateContainer').empty();
-                
-                publicChatUL.empty();
-                for (var m=0; m<config.chatHistory.length; m++) {
-                    let message = config.chatHistory[m]
-                    let new_message = $('<li class="list-group-item">').text(message.content);
-                    if (message.type == 'Public') {
-                        new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
-                    }
-                    else { //type == 'System'
-                        new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
-                    }
-                    publicChatUL.append(new_message);
-                }
+                // reconstruction option indices: [public chat, private chat, players, actions, room info, self info]
 
-                // Pregame stuff
-                if (config.game == null) {
-                    //populate player list with all in room
-                    for (var u=0; u<config.users_present.length; u++) {
-                        $('#playersContainer').append(
-                            $('<div class="card bg-info">').append(
-                                $('<div class="card-body p-2">').text(
-                                    config.users_present[u]
-                                )
-                            )
-                        )
-                    }
-
-                    //disable private chat
-                    $('#sendPrvMsg input').attr('disabled','true');
-
-                    //give host start-game options
-                    $('#actionBox').empty();
-                    if (config.isHost) {
-                        //actions = start game options
-                        $('#actionBox').append(
-                            $('.hostActions').clone().removeClass('d-none')
-                        );
-                    }
-                }
-                else { //there is an ongoing game
-                    //enable private chat
-                    $('#sendPrvMsg input').attr('disabled','false');
-
-                    //populate player list with those in game
-                    for (var u=0; u<config.game.players.length; u++) {
-                        config.game.players[u].isDead
-                            ? $('#playersContainer').append(
-                                $('<div class="card bg-dark">').append(
-                                    $('<div class="card-body p-2">').text(
-                                        config.game.players[u].username
-                                    )
-                                )
-                            )
-                            : $('#playersContainer').append(
-                                $('<div class="card bg-info">').append(
-                                    $('<div class="card-body p-2">').text(
-                                        config.game.players[u].username
-                                    )
-                                )
-                            );
-                    }
-
-                    //refresh private chat log
-                    privateChatUL.empty();
-                    for (var m=0; m<config.game.me.privateLog.length; m++) {
-                        let message = config.game.me.privateLog[m]
+                // Public Chat
+                if (config.should_reconstruct[0]) {
+                    publicChatUL.empty();
+                    for (var m=0; m<config.chatHistory.length; m++) {
+                        let message = config.chatHistory[m]
                         let new_message = $('<li class="list-group-item">').text(message.content);
-                        if (message.type == 'Private') {
-                            new_message.addClass('text-success private_message'); // Could add custom css for color/bold/italic/whatever
+                        if (message.type == 'Public') {
+                            new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
                         }
                         else { //type == 'System'
                             new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
                         }
                         publicChatUL.append(new_message);
                     }
-
-                    //fill user role
-                    $('#userRole').text(config.game.me.role)
-
-                    //populate rolemates
-                    for (var u=0; u<config.game.teammates.length; u++) {
-                        $('#teammateContainer').append(
-                            $('<div class="card bg-info">').append(
-                                $('<div class="card-body p-2">').text(
-                                    config.game.teammates[u]
+                }
+                // Private Chat
+                if (config.should_reconstruct[1]) {
+                    if (config.game == null) {
+                        //disable private chat
+                        $('#sendPrvMsg input').attr('disabled','true');
+                    }
+                    else {
+                        //enable private chat
+                        $('#sendPrvMsg input').attr('disabled','false');
+                        //refresh private chat log
+                        privateChatUL.empty();
+                        for (var m=0; m<config.game.me.privateLog.length; m++) {
+                            let message = config.game.me.privateLog[m]
+                            let new_message = $('<li class="list-group-item">').text(message.content);
+                            if (message.type == 'Private') {
+                                new_message.addClass('text-success private_message'); // Could add custom css for color/bold/italic/whatever
+                            }
+                            else { //type == 'System'
+                                new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
+                            }
+                            publicChatUL.append(new_message);
+                        }
+                    }
+                }
+                // Players
+                if (config.should_reconstruct[2]) {
+                    $('#playersContainer').empty();
+                    $('#teammateContainer').empty();
+                    if (config.game == null) {
+                        //populate player list with all in room
+                        for (var u=0; u<config.users_present.length; u++) {
+                            $('#playersContainer').append(
+                                $('<div class="card bg-info">').append(
+                                    $('<div class="card-body p-2">').text(
+                                        config.users_present[u]
+                                    )
                                 )
                             )
-                        );
+                        }
                     }
-
-                    //action box stuff
-                    let action_choices = $('<div class="card-columns" style="column-count: 3">');
-                    for (var player in config.game.actions.choices) {
-                        action_choices.append(
-                            $('<div class="card bg-info">').append(
-                                $('<div class="card-body p-2">').text(
-                                    config.game.actions.choices[player].username
+                    else {
+                        //populate player list with those in game
+                        for (var u=0; u<config.game.players.length; u++) {
+                            config.game.players[u].isDead
+                                ? $('#playersContainer').append(
+                                    $('<div class="card bg-dark">').append(
+                                        $('<div class="card-body p-2">').text(
+                                            config.game.players[u].username
+                                        )
+                                    )
                                 )
-                            )
-                        );
+                                : $('#playersContainer').append(
+                                    $('<div class="card bg-info">').append(
+                                        $('<div class="card-body p-2">').text(
+                                            config.game.players[u].username
+                                        )
+                                    )
+                                );
+                        }
+                        //populate rolemates
+                        for (var u=0; u<config.game.teammates.length; u++) {
+                            $('#teammateContainer').append(
+                                $('<div class="card bg-info">').append(
+                                    $('<div class="card-body p-2">').text(
+                                        config.game.teammates[u]
+                                    )
+                                )
+                            );
+                        }
                     }
-                    $('#actionBox')
-                        .empty()
-                        .append($('<h4>').text(config.game.actions.prompt))
-                        .append(action_choices)
-                        .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
-                        .append($('<label>').text('Confirm'))
-                        .append($('<p>Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
-                    //TODO: socket events for checking confirm. server should handle tracking and distributing who is clicked and how many are confirmed until unanimity (or just majority?)
-                } 
-            })
+                }
+                // Actions
+                if (config.should_reconstruct[3]) {
+                    if (config.game == null) {
+                        //give host start-game options
+                        $('#actionBox').empty();
+                        if (config.isHost) {
+                            //actions = start game options
+                            $('#actionBox').append(
+                                $('.hostActions').clone().removeClass('d-none')
+                            );
+                        }
+                    }
+                    else {
+                        let action_choices = $('<div class="card-columns" style="column-count: 3">');
+                        for (var player in config.game.actions.choices) {
+                            action_choices.append(
+                                $('<div class="card bg-info">').append(
+                                    $('<div class="card-body p-2">').text(
+                                        config.game.actions.choices[player].username
+                                    )
+                                )
+                            );
+                        }
+                        $('#actionBox')
+                            .empty()
+                            .append($('<h4>').text(config.game.actions.prompt))
+                            .append(action_choices)
+                            .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
+                            .append($('<label>').text('Confirm'))
+                            .append($('<p>Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
+                        //TODO: socket events for checking confirm. server should handle tracking and distributing who is clicked and how many are confirmed until unanimity (or just majority?)
+                    } 
+                }
+                // Room Info
+                if (config.should_reconstruct[4]) {
+                    $('#roomName').text(config.roomname);
+                    $('#roomCode').text(config.roomcode.split('game')[1]);
+                }
+                // Self Info
+                if (config.should_reconstruct[5]) {
+                    $('#userName').text(config.myname);
+                    if (config.game != null) {
+                        $('#userRole').text(config.game.me.role)
+                    }
+                }
+            });
 
             // Starting a new game
             $('#actionBox').on('submit', '.beginGameForm', function(e) {
-                console.log('startin game')
                 e.preventDefault(); //dont refresh page
                 let game_setup_info = {
                     mafia: parseInt($('#actionBox .numMafia').val()),

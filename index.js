@@ -157,8 +157,8 @@ gamesocket.on('connection', socket => {
 		//if the room exists...
 		//put the user in a socket room for the particular game room they're trying to enter
 		socket.join(roomToJoin);
-		//provide user with all needed room information
-        socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID));
+        //provide user with all needed room information
+        socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
         //update socket session link
         rooms[roomToJoin].socket_session_link[SESSION_ID] = socket.id;
 		//check if a game has begun
@@ -173,10 +173,18 @@ gamesocket.on('connection', socket => {
 							rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]
 					); //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
 				}
-                //let room know about reconnection
+                // Let room know about reconnection
                 let new_message = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
 				rooms[roomToJoin].chatHistory.push(new_message);
-				gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
+                gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
+
+                // Ensure everyone's player lists are up to date
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    // console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false]));
+                }
 			}
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
@@ -218,10 +226,10 @@ gamesocket.on('connection', socket => {
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
 			for (var session_id in rooms[roomToJoin].socket_session_link) {
-                console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
+                // console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
 				gamesocket
 					.to(rooms[roomToJoin].socket_session_link[session_id])
-					.emit('room update', rooms[roomToJoin].clientPackage(session_id));
+                    .emit('room update', rooms[roomToJoin].clientPackage(session_id, [true, true, true, true, true, true])); 
 			}
 		}
 	});
