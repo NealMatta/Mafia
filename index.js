@@ -304,7 +304,7 @@ gamesocket.on('connection', socket => {
     });
     socket.on('confirm vote', (checkbox_status) => {
         // Ensure no funny business
-        if ((rooms[roomToJoin]) && (rooms[roomsToJoin].game != null) && (Object.keys(rooms[roomToJoin].game[players]).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
+        if ((rooms[roomToJoin]) && (rooms[roomToJoin].game != null) && (Object.keys(rooms[roomToJoin].game[players]).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
             // checkbox_status should be a Bool of whether or not the client's box is now checked
             // Confirm or unconfirm vote based on this bool
             checkbox_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
