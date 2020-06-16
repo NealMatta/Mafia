@@ -34,15 +34,12 @@ class Game {
 		while (roleLabels.length != 0) {
 			// perform until no more labels to give/roles to assign
             const role_index = g.randomNumBetween(0, roleLabels.length - 1);
-            console.log('randomly picked role ', role_index, ': ', roleLabels[role_index]);
             const player_index = g.randomNumBetween(0, playerSessionIDs.length - 1);
             const playerSessionID = playerSessionIDs[player_index];
-            console.log('randomly picked player: ', playerSessionID)
             this.players[playerSessionID].setRole(roleLabels[role_index]);
             playerSessionIDs.splice(player_index, 1);
             roleLabels.splice(role_index, 1);
 		}
-		console.log('players', this.players)
 	}
 	getPlayerList(status = 'All') {
 		//return [{username: username, isDead: isDead},...]
@@ -91,7 +88,9 @@ class Game {
 			return {
 				prompt: 'It is daytime in the town. Select who to execute',
 				choices: this.ballots['Village'].getChoices(),
-				teammates: this.ballots['Village'].getTeammates(),
+                teammates: this.ballots['Village'].getTeammates(),
+                confirmationCount: this.ballots['Village'].numConfirmed(),
+                votesNeeded: this.ballots['Village'].numVotesRequired(),
 			};
 		} else {
 			// It's Night
@@ -100,21 +99,27 @@ class Game {
 					return {
 						prompt: 'Select who to kill',
 						choices: this.ballots['Mafia'].getChoices(),
-						teammates: this.ballots['Mafia'].getTeammates()
+                        teammates: this.ballots['Mafia'].getTeammates(),
+                        confirmationCount: this.ballots['Mafia'].numConfirmed(),
+                        votesNeeded: this.ballots['Mafia'].numVotesRequired()
 					};
 					break;
 				case 'Doctor':
 					return {
 						prompt: 'Select who to save',
 						choices: this.ballots['Doctor'].getChoices(),
-						teammates: this.ballots['Doctor'].getTeammates()
+                        teammates: this.ballots['Doctor'].getTeammates(),
+                        confirmationCount: this.ballots['Doctor'].numConfirmed(),
+                        votesNeeded: this.ballots['Doctor'].numVotesRequired()
 					};
 					break;
 				case 'Sheriff':
 					return {
 						prompt: 'Select who to investigate',
 						choices: this.ballots['Sheriff'].getChoices(), 
-						teammates: this.ballots['Sheriff'].getTeammates()
+                        teammates: this.ballots['Sheriff'].getTeammates(),
+                        confirmationCount: this.ballots['Sheriff'].numConfirmed(),
+                        votesNeeded: this.ballots['Sheriff'].numVotesRequired()
 					};
 					break;
 				default:
@@ -122,7 +127,9 @@ class Game {
 					return {
 						prompt: '',
 						choices: [],
-						teammates: [],
+                        teammates: [],
+                        confirmationCount: '',
+                        votesNeeded: ''
 					};
 					break;
 			}
@@ -154,18 +161,18 @@ class Game {
         // Handling if a voter unchecks their box
         let voter_role = this.players[sessionID].role;
         if (this.gamePhase == 'Day') {
-            this.ballots['Village'].unconfirmVote(players[sessionID.username]);
+            this.ballots['Village'].unconfirmVote(this.players[sessionID].username);
         }
         else {
             // It's Night. Confirm vote in the appropriate ballot
-            this.ballots[voter_role].unconfirmVote(players[sessionID.username]);
+            this.ballots[voter_role].unconfirmVote(this.players[sessionID].username);
         }
     }
     confirmVote(sessionID) {
         // Handling if a voter checks their box
         let voter_role = this.players[sessionID].role;
         if (this.gamePhase == 'Day') {
-            let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID.username]);
+            let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID].username);
             if (vote_result)  {
                 // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
                 // Need a way also, possibly along the same pipeline, to notify public room chat of a public execution
@@ -173,7 +180,7 @@ class Game {
         }
         else {
             // It's Night. Confirm vote in the appropriate ballot
-            let vote_result = this.ballots[voter_role].confirmVote(this.players[sessionID.username]);
+            let vote_result = this.ballots[voter_role].confirmVote(this.players[sessionID].username);
             if (vote_result)  {
                 // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
                 this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role)

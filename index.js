@@ -171,7 +171,7 @@ gamesocket.on('connection', socket => {
 	let SESSION_ID = socket.request.session.id;
 
 	// Check if the room still exists
-	if (Object.keys(rooms).includes(roomToJoin)) {
+	if (Object.keys(rooms).includes(roomToJoin) && rooms[roomToJoin].members[SESSION_ID]) {
 		//if the room exists...
 		//put the user in a socket room for the particular game room they're trying to enter
 		socket.join(roomToJoin);
@@ -179,6 +179,14 @@ gamesocket.on('connection', socket => {
         socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
         //update socket session link
         rooms[roomToJoin].socket_session_link[SESSION_ID] = socket.id;
+
+        // Update everyone's player lists
+        for (var session_id in rooms[roomToJoin].socket_session_link) {
+            gamesocket
+                .to(rooms[roomToJoin].socket_session_link[session_id])
+                .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false])); 
+        }
+
 		//check if a game has begun
 		if (rooms[roomToJoin].game != null) {
 			// Check if the user is part of the game, in which case this is a reconnection
@@ -195,18 +203,10 @@ gamesocket.on('connection', socket => {
                 let new_message = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
 				rooms[roomToJoin].chatHistory.push(new_message);
                 gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
-
-                // Ensure everyone's player lists are up to date
-                for (var session_id in rooms[roomToJoin].socket_session_link) {
-                    // console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
-                    gamesocket
-                        .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false]));
-                }
 			}
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
-		}
+        }
 	} else {
 		socket.disconnect();
 	}
@@ -244,7 +244,6 @@ gamesocket.on('connection', socket => {
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
 			for (var session_id in rooms[roomToJoin].socket_session_link) {
-                // console.log('updating user with session id & socket id ', session_id, ' | ', rooms[roomToJoin].socket_session_link[session_id]);
 				gamesocket
 					.to(rooms[roomToJoin].socket_session_link[session_id])
                     .emit('room update', rooms[roomToJoin].clientPackage(session_id, [true, true, true, true, true, true])); 
@@ -295,11 +294,26 @@ gamesocket.on('connection', socket => {
         // Ensure no funny business
         if ((rooms[roomToJoin]) && (rooms[roomToJoin].game != null) && (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
             rooms[roomToJoin].game.vote(SESSION_ID, vote);
-            // Update the action box for everyone with the same role as the voter
-            let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-            gamesocket
-                .in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
-                .emit('room update', [false, false, false, true, false, false]);
+            // Update the action box for everyone voting in the same ballot as the player
+            // Which is, if it's daytime, everyone, or if it's night, only those with same role
+            if (rooms[roomToJoin].game.gamePhase == 'Day') {
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                }
+            }
+            else {
+                // If Nighttime
+                let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                        gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                    }
+                }
+            }
         }
     });
     socket.on('confirm vote', (checkbox_status) => {
@@ -309,10 +323,24 @@ gamesocket.on('connection', socket => {
             // Confirm or unconfirm vote based on this bool
             checkbox_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
             // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
-            let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-            gamesocket
-                .in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
-                .emit('room update', [false, true, false, true, false, false]);
+            if (rooms[roomToJoin].game.gamePhase == 'Day') {
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                }
+            }
+            else {
+                // If Nighttime
+                let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                        gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                    }
+                }
+            }
         }
     });
 
@@ -320,14 +348,15 @@ gamesocket.on('connection', socket => {
 		if (Object.keys(rooms).includes(roomToJoin)) {
 			// if still in pregame stage, remove player from room membership
 			if (rooms[roomToJoin].game == null) {
-				rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
+                rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
 			}
 			// if the game is ongoing and the disconnecting client was part of it, warn the room of this disconnect
 			else if (rooms[roomToJoin].game.players[SESSION_ID]) {
 				let msg = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.');
 				rooms[roomToJoin].chatHistory.push(msg);
 				gamesocket.in(roomToJoin).emit('new chat', msg);
-			}
+            }
+            
 		}
 		console.log('user disconnected from gamepage w socket id:' + socket.id);
 	});

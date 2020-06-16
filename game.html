@@ -190,13 +190,18 @@
                                     )
                                 )
                         }
+                        console.log(config.game.actions);
+                        let confirmationCount = String(config.game.actions.confirmationCount);
+                        let votesNeeded = String(config.game.actions.votesNeeded);
+                        let countFraction = confirmationCount + '/' + votesNeeded;
+                        // let meIsConfirmed = config.game.actions.meIsConfirmed; // Bool
                         $('#actionBox')
                             .empty()
                             .append($('<h4>').text(config.game.actions.prompt))
                             .append(action_choices)
                             .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
                             .append($('<label>').text('Confirm'))
-                            .append($('<p>Confirmed: <span id="count">0</span>/' + Math.floor(config.game.actions.teammates.length)/2 + 1));
+                            .append($('<p>').text('Confirmed: ' + countFraction));
                     } 
                 }
                 // Room Info

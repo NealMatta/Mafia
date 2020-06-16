@@ -21,7 +21,7 @@ class Room {
 		this.updateSocketLink(socket_id, session_id);
 	}
 	removePlayer(socket_id, session_id) {
-		delete this.members[socket_id];
+		delete this.members[session_id];
 		delete this.socket_session_link[session_id];
 	}
 	updateSocketLink(socket_id, session_id) {

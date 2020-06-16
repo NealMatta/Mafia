@@ -21,11 +21,12 @@ class Ballot {
 
         // Threshold to close the ballot
         // I dont think JS has a problem comparing ints and doubles (which we would do when checking if this minimum is reached) but just in case, this is an integer
-        this.minimum_required_votes = Math.floor((this.teammates.lenth / 2) + 1);
+        this.minimum_required_votes = Math.floor((Object.keys(this.teammates).length / 2) + 1);
         
     }
 
     castVote(vote) {
+        // vote is a username of who to vote for
         // Check if the ballot is still open and make sure the vote is valid
         if (this.isOpen && Object.keys(this.choices).includes(vote)) {
             // Unselect all choices except the newly made choice
@@ -40,6 +41,7 @@ class Ballot {
     }
 
     confirmVote(voter) {
+        // voter is a username of the voter
         // Check if the ballot is still open
         if (this.isOpen) {
             this.teammates[voter] = true;
@@ -69,7 +71,17 @@ class Ballot {
 
     numConfirmed() {
         // Return integer of how many votes are confirmed at the moment
-        return this.teammates.filter(Boolean).length;
+        // i.e. how many values are true in the this.teammates object
+        return Object.keys(this.teammates).filter(username => this.teammates[username]).length;
+    }
+
+    numVotesRequired() {
+        return this.minimum_required_votes;
+    }
+
+    userHasConfirmed(user) {
+        // user is a username
+        return this.teammates[user];
     }
 
     getChoices() {
