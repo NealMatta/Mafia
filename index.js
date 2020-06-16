@@ -236,9 +236,9 @@ gamesocket.on('connection', socket => {
             console.log(options);
 			rooms[roomToJoin].game = new Game(
 				rooms[roomToJoin].members,
-				options.mafia,
 				options.sheriffs,
-				options.doctors
+                options.doctors,
+                options.mafia
 			);
 			rooms[roomToJoin].chatHistory.push(new Message('New Game Started'));
 			//start game for everyone by pushing them an update
