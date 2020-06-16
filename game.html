@@ -190,18 +190,37 @@
                                     )
                                 )
                         }
-                        console.log(config.game.actions);
+
+                        let action_teammates = $('<div class="card-columns" style="column-count: 3">');
+                        for (var player in config.game.actions.teammates) {
+                            (config.game.actions.teammates[player]) //If the player has confirmed their vote or not
+                                ? action_teammates.append(
+                                    $('<div class="card bg-light">').append(
+                                        $('<div class="card-body p-2">').text(player).append(
+                                            $('<div class="badge badge-success float-right">').text(String.fromCharCode(10004))
+                                        )
+                                    )
+                                )
+                                : null; // Do nothing
+                                // : action_teammates.append(
+                                //     $('<div class="card bg-light">').append(
+                                //         $('<div class="card-body p-">').text(player)
+                                //     )
+                                // )
+                        }
+
                         let confirmationCount = String(config.game.actions.confirmationCount);
                         let votesNeeded = String(config.game.actions.votesNeeded);
                         let countFraction = confirmationCount + '/' + votesNeeded;
-                        // let meIsConfirmed = config.game.actions.meIsConfirmed; // Bool
                         $('#actionBox')
                             .empty()
                             .append($('<h4>').text(config.game.actions.prompt))
                             .append(action_choices)
-                            .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
-                            .append($('<label>').text('Confirm'))
-                            .append($('<p>').text('Confirmed: ' + countFraction));
+                            .append($('<input id="confirmationBox" class="btn btn-primary" type="button" value="Confirm">'))
+                            .append($('<input id="unconfirmationBox" class="btn btn-danger" type="button" value="Revoke">'))
+                            .append($('<p>').text('Confirmed: ' + countFraction))
+                            .append(action_teammates);
+                        
                     } 
                 }
                 // Room Info
@@ -237,8 +256,11 @@
                 console.log('arrived here !')
                 socket.emit('vote', $(this).text());
             });
-            $('#actionBox').on('change', ':checkbox', function() {
-                socket.emit('confirm vote', $(this).prop('checked'));
+            $('#actionBox').on('click', '#confirmationBox', function() {
+                socket.emit('confirm vote', true);
+            })
+            $('#actionBox').on('click', '#unconfirmationBox', function() {
+                socket.emit('confirm vote', false);
             })
 
         });
