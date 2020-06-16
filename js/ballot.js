@@ -29,11 +29,13 @@ class Ballot {
         // Check if the ballot is still open and make sure the vote is valid
         if (this.isOpen && Object.keys(this.choices).includes(vote)) {
             // Unselect all choices except the newly made choice
-            Object.keys(this.choices).forEach(function(key){ this.choices[key] = false });
+            let target1 = this.choices;
+            Object.keys(this.choices).forEach(key => { target1[key] = false });
             this.choices[vote] = true;
 
+            let target2 = this.teammates;
             // Clear current confirmations
-            Object.keys(this.teammates).forEach(function(key){ this.teammates[key] = false });
+            Object.keys(this.teammates).forEach(key => { target2[key] = false });
         }
     }
 

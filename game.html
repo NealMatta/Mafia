@@ -174,13 +174,21 @@
                     else {
                         let action_choices = $('<div class="card-columns" style="column-count: 3">');
                         for (var player in config.game.actions.choices) {
-                            action_choices.append(
-                                $('<div class="card bg-info">').append(
-                                    $('<div class="card-body p-2">').text(
-                                        player
+                            (config.game.actions.choices[player]) //If the player is selected or not
+                                ? action_choices.append(
+                                    $('<div class="card bg-success">').append(
+                                        $('<div class="card-body p-2 player-selector">').text(
+                                            player
+                                        )
                                     )
                                 )
-                            );
+                                : action_choices.append(
+                                    $('<div class="card bg-info">').append(
+                                        $('<div class="card-body p-2 player-selector">').text(
+                                            player
+                                        )
+                                    )
+                                )
                         }
                         $('#actionBox')
                             .empty()
@@ -188,8 +196,7 @@
                             .append(action_choices)
                             .append($('<input id="confirmationBox" class="btn btn-success" type="checkbox">'))
                             .append($('<label>').text('Confirm'))
-                            .append($('<p>Confirmed: <span id="count">0</span>/'+config.game.actions.teammates.length));
-                        //TODO: socket events for checking confirm. server should handle tracking and distributing who is clicked and how many are confirmed until unanimity (or just majority?)
+                            .append($('<p>Confirmed: <span id="count">0</span>/' + Math.floor(config.game.actions.teammates.length)/2 + 1));
                     } 
                 }
                 // Room Info
@@ -220,6 +227,11 @@
                 });
             })
 
+            // Voting Mechanism
+            $('#actionBox').on('click', '.player-selector', function() {
+                console.log('arrived here !')
+                socket.emit('vote', $(this).text());
+            });
             $('#actionBox').on('change', ':checkbox', function() {
                 socket.emit('confirm vote', $(this).prop('checked'));
             })

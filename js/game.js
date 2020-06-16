@@ -11,10 +11,10 @@ class Game {
 		this.numDoctors = numDoctors;
 		this.numMafia = numMafia;
 		this.assignRoles();
-		this.playerkey = players; //holds original roles, for distribution in postgame
+        this.playerkey = players; //holds original roles, for distribution in postgame
+        this.ballots = {}; //collection of active Ballot objects
         this.gamePhase = 'Night';
-        this.advance(); // Move forward from night to day and initiate those ballots
-        this.ballots = {}; //collection of Ballot objects
+        this.advance(); // Move forward from night to day and instantiate the first ballot
 		this.roleRoomCodes = {
 			Mafia: g.generateRoomCode(),
 			Sheriff: g.generateRoomCode(),
@@ -74,11 +74,11 @@ class Game {
 	}
 	advance() {
         // Generate Clean Ballots
-        this.active_ballots = {
-            Mafia: new Ballot(this.players, 'Mafia'),
-            Sheriff: new Ballot(this.players, 'Sheriff'),
-            Doctor: new Ballot(this.players, 'Doctor'),
-            Village: new Ballot(this.players, 'Village'),
+        this.ballots = {
+            'Mafia': new Ballot(this.players, 'Mafia'),
+            'Sheriff': new Ballot(this.players, 'Sheriff'),
+            'Doctor': new Ballot(this.players, 'Doctor'),
+            'Village': new Ballot(this.players, 'Village'),
         }
         // Move on to the next game phase
         this.gamePhase == 'Day'
@@ -90,8 +90,8 @@ class Game {
 		if (this.gamePhase == 'Day') {
 			return {
 				prompt: 'It is daytime in the town. Select who to execute',
-				choices: this.active_ballots['Mafia'].getChoices(),
-				teammates: this.active_ballots['Mafia'].getTeammates(),
+				choices: this.ballots['Village'].getChoices(),
+				teammates: this.ballots['Village'].getTeammates(),
 			};
 		} else {
 			// It's Night
@@ -99,22 +99,22 @@ class Game {
 				case 'Mafia':
 					return {
 						prompt: 'Select who to kill',
-						choices: this.active_ballots['Mafia'].getChoices(),
-						teammates: this.active_ballots['Mafia'].getTeammates()
+						choices: this.ballots['Mafia'].getChoices(),
+						teammates: this.ballots['Mafia'].getTeammates()
 					};
 					break;
 				case 'Doctor':
 					return {
 						prompt: 'Select who to save',
-						choices: this.active_ballots['Doctor'].getChoices(),
-						teammates: this.active_ballots['Doctor'].getTeammates()
+						choices: this.ballots['Doctor'].getChoices(),
+						teammates: this.ballots['Doctor'].getTeammates()
 					};
 					break;
 				case 'Sheriff':
 					return {
 						prompt: 'Select who to investigate',
-						choices: this.active_ballots['Sheriff'].getChoices(), 
-						teammates: this.active_ballots['Sheriff'].getTeammates()
+						choices: this.ballots['Sheriff'].getChoices(), 
+						teammates: this.ballots['Sheriff'].getTeammates()
 					};
 					break;
 				default:
@@ -165,7 +165,7 @@ class Game {
         // Handling if a voter checks their box
         let voter_role = this.players[sessionID].role;
         if (this.gamePhase == 'Day') {
-            let vote_result = this.ballots['Village'].confirmVote(players[sessionID.username]);
+            let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID.username]);
             if (vote_result)  {
                 // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
                 // Need a way also, possibly along the same pipeline, to notify public room chat of a public execution
@@ -173,7 +173,7 @@ class Game {
         }
         else {
             // It's Night. Confirm vote in the appropriate ballot
-            let vote_result = this.ballots[voter_role].confirmVote(players[sessionID.username]);
+            let vote_result = this.ballots[voter_role].confirmVote(this.players[sessionID.username]);
             if (vote_result)  {
                 // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
                 this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role)
