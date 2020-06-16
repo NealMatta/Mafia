@@ -177,7 +177,7 @@
                             action_choices.append(
                                 $('<div class="card bg-info">').append(
                                     $('<div class="card-body p-2">').text(
-                                        config.game.actions.choices[player].username
+                                        player
                                     )
                                 )
                             );
@@ -219,6 +219,11 @@
                     $('#actionBox .startgameerror').text(errormsg);
                 });
             })
+
+            $('#actionBox').on('change', ':checkbox', function() {
+                socket.emit('confirm vote', $(this).prop('checked'));
+            })
+
         });
     </script>
 	<body class="h-100">

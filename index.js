@@ -7,6 +7,7 @@ var session = require('express-session');
 const Room = require('./js/room');
 const Message = require('./js/message');
 const Game = require('./js/game');
+// const Ballot = require('./js/ballot');
 
 const { info } = require('console');
 const url = 'localhost:69/'; //big dreams of a .com one day
@@ -14,6 +15,17 @@ const port = 69; // port for hosting site on local system. will probably be inva
 
 var rooms = {}; // Contains all active rooms as roomid:Room
 var public_rooms = {}; // Contains all public, unstarted rooms as roomname:roomid
+
+// A list of prohibited usernames. This could end up including profanity or whatever, but mainly it's to avoid confusion.
+// For example, a username like "abstain" would be confusing during a vote on who to kill.
+const FORBIDDEN_USERNAMES = [
+    'ABSTAIN',
+    'ABSTAIN!',
+    'ABSTAIN.',
+    'NO VOTE',
+    'NONE OF THE ABOVE',
+    'NEITHER'
+];
 
 // ==========================
 // ===== EXPRESS EVENTS =====
@@ -81,8 +93,10 @@ homesocket.on('connection', socket => {
 			errorback('Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(roomName)) {
 			errorback('Room with this name already exists.');
-		} else {
-			//name is valid; make the room.
+		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
+            errorback('Please use a different username.')
+        } else {
+			//name and username valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
 			console.log('new room created with code ' + room.code);
 			room.chatHistory.push(new Message(username + ' created the room.'));
@@ -108,7 +122,9 @@ homesocket.on('connection', socket => {
 			errorback('Error joining session. Please refresh and try again.');
 		} else if (rooms[public_rooms[roomName]].getMemberList().includes(username)) {
 			errorback('That username is already in use in this lobby.');
-		} else {
+		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
+            errorback('Please use a different username.')
+        } else {
 			//name and session are valid; join the room
 			rooms[public_rooms[roomName]].addPlayer(socket.id, SESSION_ID, username);
 			socket.emit('send to room', rooms[public_rooms[roomName]].code);
@@ -123,9 +139,11 @@ homesocket.on('connection', socket => {
 			roomCode = 'game' + input.toUpperCase();
 		} else if (input.length == 8) {
 			roomCode = input.toUpperCase();
-		} else {
+		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
+            errorback('Please use a different username.')
+        } else {
 			errorback('Invalid room code.');
-		}
+		} 
 
 		if (rooms[roomCode]) {
 			if (rooms[roomCode].getMemberList().includes(username)) {
@@ -258,7 +276,7 @@ gamesocket.on('connection', socket => {
 				// console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
 				if (sender_role != 'Villager') {
 					// everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-					let message = rooms[roomToJoin].sendPrivateMessage(sender_role, sender_name, msg, 'Private');
+					let message = rooms[roomToJoin].sendPrivateMessage(msg, sender_role, sender_name, 'Private');
 					gamesocket
 						.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
 						.emit('new private chat', message);
@@ -271,7 +289,32 @@ gamesocket.on('connection', socket => {
 		} else {
 			console.log('illegal private message submission attempt from ' + socket.id);
 		}
-	});
+    });
+    
+    socket.on('vote', (vote) => {
+        // Ensure no funny business
+        if ((rooms[roomToJoin]) && (rooms[roomsToJoin].game != null) && (Object.keys(rooms[roomToJoin].game[players]).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
+            rooms[roomToJoin].game.castVote(SESSION_ID, vote);
+            // Update the action box for everyone with the same role as the voter
+            let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+            gamesocket
+                .in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
+                .emit('room update', [false, false, false, true, false, false]);
+        }
+    });
+    socket.on('confirm vote', (checkbox_status) => {
+        // Ensure no funny business
+        if ((rooms[roomToJoin]) && (rooms[roomsToJoin].game != null) && (Object.keys(rooms[roomToJoin].game[players]).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
+            // checkbox_status should be a Bool of whether or not the client's box is now checked
+            // Confirm or unconfirm vote based on this bool
+            checkbox_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
+            // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
+            let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+            gamesocket
+                .in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
+                .emit('room update', [false, true, false, true, false, false]);
+        }
+    });
 
 	socket.on('disconnect', () => {
 		if (Object.keys(rooms).includes(roomToJoin)) {

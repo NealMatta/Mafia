@@ -1,5 +1,7 @@
 const Message = require('./message');
+const Ballot = require('./ballot');
 const g = require('./global');
+const { generateRoomCode } = require('./global');
 
 class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
@@ -10,7 +12,9 @@ class Game {
 		this.numMafia = numMafia;
 		this.assignRoles();
 		this.playerkey = players; //holds original roles, for distribution in postgame
-		this.gamePhase = 'Day';
+        this.gamePhase = 'Night';
+        this.advance(); // Move forward from night to day and initiate those ballots
+        this.ballots = {}; //collection of Ballot objects
 		this.roleRoomCodes = {
 			Mafia: g.generateRoomCode(),
 			Sheriff: g.generateRoomCode(),
@@ -69,39 +73,48 @@ class Game {
 		return to_return;
 	}
 	advance() {
-		//move on to the next game phase
-		this.gamePhase == 'Day' ? (this.gamePhase = 'Night') : (this.gamePhase = 'Day');
+        // Generate Clean Ballots
+        this.active_ballots = {
+            Mafia: new Ballot(this.players, 'Mafia'),
+            Sheriff: new Ballot(this.players, 'Sheriff'),
+            Doctor: new Ballot(this.players, 'Doctor'),
+            Village: new Ballot(this.players, 'Village'),
+        }
+        // Move on to the next game phase
+        this.gamePhase == 'Day'
+            ? this.gamePhase = 'Night'
+            : this.gamePhase = 'Day';
 	}
 	actions(role) {
 		//contents of the action box for each type of player
 		if (this.gamePhase == 'Day') {
 			return {
-				prompt: 'Select who to execute',
-				choices: this.getPlayerList('Alive'),
-				teammates: this.getPlayerList('Alive'),
+				prompt: 'It is daytime in the town. Select who to execute',
+				choices: this.active_ballots['Mafia'].getChoices(),
+				teammates: this.active_ballots['Mafia'].getTeammates(),
 			};
 		} else {
-			// Night
+			// It's Night
 			switch (role) {
 				case 'Mafia':
 					return {
 						prompt: 'Select who to kill',
-						choices: this.getPlayerList('Alive'),
-						teammates: this.getPlayersWithRole('Mafia'),
+						choices: this.active_ballots['Mafia'].getChoices(),
+						teammates: this.active_ballots['Mafia'].getTeammates()
 					};
 					break;
 				case 'Doctor':
 					return {
 						prompt: 'Select who to save',
-						choices: this.getPlayerList('Alive'),
-						teammates: this.getPlayersWithRole('Doctor'),
+						choices: this.active_ballots['Doctor'].getChoices(),
+						teammates: this.active_ballots['Doctor'].getTeammates()
 					};
 					break;
 				case 'Sheriff':
 					return {
 						prompt: 'Select who to investigate',
-						choices: this.getPlayerList('Alive'), //perhaps dead or alive? possibly you can investigate dead people? maybe not good strategy but not unrealistic
-						teammates: this.getPlayersWithRole('Sheriff'),
+						choices: this.active_ballots['Sheriff'].getChoices(), 
+						teammates: this.active_ballots['Sheriff'].getTeammates()
 					};
 					break;
 				default:
@@ -115,7 +128,7 @@ class Game {
 			}
 		}
 	}
-	sendPrivateMessage(to, from, text, type) {
+	sendPrivateMessage(text, to, from='', type='System') {
 		//to == role; from == session ID
 		//type == 'Private' or 'System'
 		let message = new Message(text, type, this.players[from].username, to);
@@ -126,7 +139,47 @@ class Game {
 			}
 		}
 		return message;
-	}
+    }
+    vote(sessionID, vote) {
+        let voter_role = this.players[sessionID].role;
+        if (this.gamePhase == 'Day') {
+            this.ballots['Village'].castVote(vote);
+        }
+        else {
+            // It's Night. Cast vote in the appropriate ballot
+            this.ballots[voter_role].castVote(vote);
+        }
+    }
+    unconfirmVote(sessionID) {
+        // Handling if a voter unchecks their box
+        let voter_role = this.players[sessionID].role;
+        if (this.gamePhase == 'Day') {
+            this.ballots['Village'].unconfirmVote(players[sessionID.username]);
+        }
+        else {
+            // It's Night. Confirm vote in the appropriate ballot
+            this.ballots[voter_role].unconfirmVote(players[sessionID.username]);
+        }
+    }
+    confirmVote(sessionID) {
+        // Handling if a voter checks their box
+        let voter_role = this.players[sessionID].role;
+        if (this.gamePhase == 'Day') {
+            let vote_result = this.ballots['Village'].confirmVote(players[sessionID.username]);
+            if (vote_result)  {
+                // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
+                // Need a way also, possibly along the same pipeline, to notify public room chat of a public execution
+            }
+        }
+        else {
+            // It's Night. Confirm vote in the appropriate ballot
+            let vote_result = this.ballots[voter_role].confirmVote(players[sessionID.username]);
+            if (vote_result)  {
+                // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
+                this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role)
+            }
+        }
+    }
 	clientPackage(sessionID) {
 		return {
 			me: this.players[sessionID], //so client can can read their own privateLog, role, and status
