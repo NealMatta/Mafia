@@ -207,18 +207,29 @@ gamesocket.on('connection', socket => {
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
         }
-	} else {
+    } 
+    else if (Object.keys(rooms).includes(roomToJoin)) {
+        // If the room exists and they're not already a part of it, give them an option to join
+        socket.emit('prompt for username', rooms[roomToJoin].name);
+    }
+    else {
 		socket.disconnect();
-	}
+    }
+    
 
-	socket.on('name set', (name, errorback) => {
-		//errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
-		if (rooms[roomToJoin].getMemberList().includes(name)) {
-			errorback('That name is already in use in this game');
-		} else {
-			console.log(rooms[roomToJoin].members[SESSION_ID]);
-			rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
-		}
+	socket.on('join via link', (name, errorback) => {
+        // errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
+
+        // Ensure nobody's trying to inject a username change
+        if (!(Object.keys(rooms[roomToJoin].players).includes(SESSION_ID))) {
+            if (rooms[roomToJoin].getMemberList().includes(name)) {
+                errorback('That name is already in use in this game');
+            }
+            else {
+                rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
+                socket.emit('send to room', rooms[public_rooms[roomName]].code);
+            }
+        }
 	});
 
 	socket.on('game start', (options, errorback) => {
