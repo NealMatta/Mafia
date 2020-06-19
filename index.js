@@ -19,6 +19,7 @@ var public_rooms = {}; // Contains all public, unstarted rooms as roomname:roomi
 // A list of prohibited usernames. This could end up including profanity or whatever, but mainly it's to avoid confusion.
 // For example, a username like "abstain" would be confusing during a vote on who to kill.
 const FORBIDDEN_USERNAMES = [
+    '',
     'ABSTAIN',
     'ABSTAIN!',
     'ABSTAIN.',
@@ -93,8 +94,8 @@ homesocket.on('connection', socket => {
 			errorback('Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(roomName)) {
 			errorback('Room with this name already exists.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			//name and username valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
@@ -122,8 +123,8 @@ homesocket.on('connection', socket => {
 			errorback('Error joining session. Please refresh and try again.');
 		} else if (rooms[public_rooms[roomName]].getMemberList().includes(username)) {
 			errorback('That username is already in use in this lobby.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			//name and session are valid; join the room
 			rooms[public_rooms[roomName]].addPlayer(socket.id, SESSION_ID, username);
@@ -139,8 +140,8 @@ homesocket.on('connection', socket => {
 			roomCode = 'game' + input.toUpperCase();
 		} else if (input.length == 8) {
 			roomCode = input.toUpperCase();
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			errorback('Invalid room code.');
 		} 
@@ -228,6 +229,9 @@ gamesocket.on('connection', socket => {
             if (!(Object.keys(rooms[roomToJoin].members).includes(SESSION_ID))) {
                 if (rooms[roomToJoin].getMemberList().includes(name)) {
                     errorback('That name is already in use in this game');
+                }
+                else if (FORBIDDEN_USERNAMES.includes(name.trim().toUpperCase())) {
+                    errorback('Please enter a valid username.')
                 }
                 else {
                     console.log('adding')

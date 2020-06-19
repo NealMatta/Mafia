@@ -522,18 +522,19 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade m-auto" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-            <div class="modal-dialog">
+        <div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="staticBackdropLabel"></h5>
-                </div>
-                <div class="modal-body">
-                    <form id="usernameSubmission">
-                        <input id="usernameInput" class="form-group w-100" type="text" placeholder="Username">
-                        <input class="form-group btn btn-primary float-right" type="submit" value="Join">
-                    </form>
-                </div>
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="staticBackdropLabel"></h5>
+                    </div>
+                    <div class="modal-body">
+                        <form id="usernameSubmission">
+                            <input id="usernameInput" class="form-group w-100" type="text" placeholder="Username" minlength="1" maxlength="24" autocomplete="off">
+                            <span id="joinErrorMsg" class="text-center text-danger"></span>
+                            <input class="form-group btn btn-primary float-right" type="submit" value="Join">
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
