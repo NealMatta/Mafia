@@ -17,7 +17,7 @@ class Room {
 		this.host = host; //sessionID of the host, who is given priviledge of starting the game
 	}
 	addPlayer(socket_id, session_id, username) {
-		this.members[session_id] = new Player(username);
+		this.members[session_id] = new Player(username.trim());
 		this.updateSocketLink(socket_id, session_id);
 	}
 	removePlayer(socket_id, session_id) {
