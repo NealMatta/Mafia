@@ -178,7 +178,7 @@ gamesocket.on('connection', socket => {
         //provide user with all needed room information
         socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
         //update socket session link
-        rooms[roomToJoin].socket_session_link[SESSION_ID] = socket.id;
+        rooms[roomToJoin].updateSocketLink(socket.id, SESSION_ID);
 
         // Update everyone's player lists
         for (var session_id in rooms[roomToJoin].socket_session_link) {
@@ -218,16 +218,25 @@ gamesocket.on('connection', socket => {
     
 
 	socket.on('join via link', (name, errorback) => {
-        // errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
 
-        // Ensure nobody's trying to inject a username change
-        if (!(Object.keys(rooms[roomToJoin].players).includes(SESSION_ID))) {
-            if (rooms[roomToJoin].getMemberList().includes(name)) {
-                errorback('That name is already in use in this game');
-            }
-            else {
-                rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
-                socket.emit('send to room', rooms[public_rooms[roomName]].code);
+        console.log(SESSION_ID, socket.id)
+        console.log(rooms[roomToJoin].members)
+        // errorback(error_message) is a callback func on the clientside that will display the error message
+        // Make sure room still exists
+        if (rooms[roomToJoin]) {
+            // Ensure nobody's trying to inject a username change or something
+            if (!(Object.keys(rooms[roomToJoin].members).includes(SESSION_ID))) {
+                if (rooms[roomToJoin].getMemberList().includes(name)) {
+                    errorback('That name is already in use in this game');
+                }
+                else {
+                    console.log('adding')
+                    rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
+                    // Destroy the modal on the uesr's page
+                    socket.emit('grant access', rooms[roomToJoin].code);
+                    // Update user's page completely
+                    socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
+                }
             }
         }
 	});

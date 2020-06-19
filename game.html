@@ -36,7 +36,8 @@
                 $('#staticBackdrop').modal('show');
                 $('#staticBackdrop').on('shown.bs.modal', function () {
                     $('#staticBackdropLabel').text('Joining ' + roomName);
-                    $('#usernameSubmission').on('submit', function() {
+                    $('#usernameSubmission').on('submit', function(e) {
+                        e.preventDefault();
                         socket.emit('join via link', $('#usernameInput').val(), function(e) {
                             // Error handling
                             $('#joinErrorMsg').text(e);
@@ -46,8 +47,8 @@
 
             })
 
-            socket.on('send to room', url => {
-				window.open(url, '_self');
+            socket.on('grant access', url => {
+				$('#staticBackdrop').modal('hide').then(function() {modal('dispose')});
 			});
 
             // Public Messaging and Logs
