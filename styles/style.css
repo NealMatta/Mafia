@@ -38,15 +38,18 @@ h2, h3, h4, h5, h6 , .lead {
 }
 p, a, span, div, li {
     /* Default Font */
-    color: whitesmoke;
+    /* color: whitesmoke; */
+    color: #fee6e6 !important;
 }
 
 .homepage_bg {
-    background:black;
+    /* background: rgb(31, 31, 31); */
+    background: #1c1c1c;
+    background: radial-gradient(circle, rgba(28,28,28,1) 60%, rgba(0,0,0,1) 100%);
 }
 
 .homepage_tile {
-    background: rgb(31, 31, 31);
+    background: #151515;
 }
 
 .game_body {
@@ -61,16 +64,22 @@ p, a, span, div, li {
 .list-group-item {
     /* Override bootstrap's white bg */
     background-color: rgba(0, 0, 0, 0) !important;
-    color: whitesmoke !important;
+    color: #fee6e6 !important;
 }
 .list-group-item-action:hover {
     background-color: rgba(0, 0, 0, 0.2) !important;
 }
 
+/* input[type="text"] {
+    background-color: lightgray !important;
+} */
+
 .daytime {
-    background: orangered;
+    /* background: orangered; */
+    background: lightgray;
 }
 
 .nighttime {
-    background: midnightblue;
+    /* background: midnightblue; */
+    background: #04082a;
 }
