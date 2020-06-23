@@ -248,16 +248,17 @@ gamesocket.on('connection', socket => {
 	socket.on('game start', (options, errorback) => {
 		//options is {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
-		if (Object.keys(rooms[roomToJoin].members).length < 4) {
+        if (Object.keys(rooms[roomToJoin].members).length < 4) {
 			errorback('There must be at least four players to start a game');
-		} else if (
-			parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) >
-			Object.keys(rooms[roomToJoin].members).length
-		) {
+        }
+        else if ([parseInt(options.mafia), parseInt(options.sheriffs), parseInt(options.doctors)].includes(0)) {
+            errorback('There must be at least one of each role')
+        }
+        else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');
-		} else {
+        }
+        else {
             //create new game
-            console.log(options);
 			rooms[roomToJoin].game = new Game(
 				rooms[roomToJoin].members,
 				options.sheriffs,
@@ -299,7 +300,7 @@ gamesocket.on('connection', socket => {
 				// console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
 				if (sender_role != 'Villager') {
 					// everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-					let message = rooms[roomToJoin].sendPrivateMessage(msg, sender_role, sender_name, 'Private');
+					let message = rooms[roomToJoin].game.sendPrivateMessage(msg, sender_role, sender_name, 'Private');
 					gamesocket
 						.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
 						.emit('new private chat', message);
@@ -340,28 +341,41 @@ gamesocket.on('connection', socket => {
             }
         }
     });
-    socket.on('confirm vote', (checkbox_status) => {
+    socket.on('confirm vote', (confirmation_status) => {
         // Ensure no funny business
         if ((rooms[roomToJoin]) && (rooms[roomToJoin].game != null) && (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
-            // checkbox_status should be a Bool of whether or not the client's box is now checked
+            // confirmation_status should be a Bool of whether or not the client is confirming or not
             // Confirm or unconfirm vote based on this bool
-            checkbox_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
-            // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
-            if (rooms[roomToJoin].game.gamePhase == 'Day') {
+            let result = confirmation_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
+            if (result) {
+                // Voting is complete. Inform everyone of the results and update action boxes and private chats.
+                // result is a message to be sent to the public chat
+                rooms[roomToJoin].chatHistory.push(new Message(result));
+                gamesocket.in(roomToJoin).emit('new chat', new Message(result));
                 for (var session_id in rooms[roomToJoin].socket_session_link) {
                     gamesocket
                         .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, true, true, false, true])); 
                 }
             }
             else {
-                // If Nighttime
-                let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-                for (var session_id in rooms[roomToJoin].socket_session_link) {
-                    if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
+                if (rooms[roomToJoin].game.gamePhase == 'Day') {
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
                         gamesocket
-                        .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                    }
+                }
+                else {
+                    // If Nighttime
+                    let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
+                        if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                            gamesocket
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                        }
                     }
                 }
             }

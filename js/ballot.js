@@ -57,8 +57,8 @@ class Ballot {
             }
         }
         else {
-            return this.close();
-            // Returns string session ID of the voted-for player
+            return false
+            // Returns false if voting is over. The result (from close()) need only be returned once.
         }
     }
 
