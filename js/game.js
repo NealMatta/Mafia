@@ -29,7 +29,7 @@ class Game {
 		let part3 = Array(this.numMafia).fill('Mafia');
 		let part4 = Array(this.numVillagers).fill('Villager');
 		let roleLabels = part1.concat(part2, part3, part4);
-		// [sherrify, doctor, mafia, villager, villager]
+		// e.g. [sherriff, doctor, mafia, villager, villager]
 		let playerSessionIDs = Object.keys(this.players); //list of session IDs
 		while (roleLabels.length != 0) {
 			// perform until no more labels to give/roles to assign
@@ -70,8 +70,21 @@ class Game {
 		return to_return;
 	}
 	advance() {
-        // Clear Ballot Results
-        this.active_ballot_results = {Mafia: false, Sheriff: false, Doctor: false};
+        // Clear Ballot Results, and track only those role ballots with remaining players
+        this.active_ballot_results = {};
+        if (this.getPlayersWithRole('Mafia').length > 0) {
+            this.active_ballot_results['Mafia'] = false;
+        }
+        else {
+            // TODO: Implement Game Over
+            // this.gameOver(), perhaps
+        }
+        if (this.getPlayersWithRole('Doctor').length > 0) {
+            this.active_ballot_results['Doctor'] = false;
+        }
+        if (this.getPlayersWithRole('Sheriff').length > 0) {
+            this.active_ballot_results['Sheriff'] = false;
+        }
         // Generate Clean Ballots
 		this.ballots = {
 			Mafia: new Ballot(this.players, 'Mafia'),
@@ -125,7 +138,7 @@ class Game {
 				default:
 					//villagers
 					return {
-						prompt: 'It is night time.',
+						prompt: '',
 						choices: [],
 						teammates: [],
 						confirmationCount: '',
