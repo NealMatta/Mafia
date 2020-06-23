@@ -224,7 +224,7 @@
                             (config.game.actions.teammates[player]) //If the player has confirmed their vote or not
                                 ? action_teammates.append(
                                     $('<div class="card bg-light">').append(
-                                        $('<div class="card-body p-2">').text(player).append(
+                                        $('<div class="card-body p-2 text-dark">').text(player).append(
                                             $('<div class="badge badge-success float-right">').text(String.fromCharCode(10004))
                                         )
                                     )
@@ -237,7 +237,7 @@
                                 // )
                         }
 
-                        if (config.game.actions.prompt != '') {
+                        if (config.game.actions.choices.length != 0) {
                             let confirmationCount = String(config.game.actions.confirmationCount);
                             let votesNeeded = String(config.game.actions.votesNeeded);
                             let countFraction = confirmationCount + '/' + votesNeeded;
@@ -253,7 +253,7 @@
                         else {
                             $('#actionBox')
                                 .empty()
-                                .append($('<h4>').text('It is night in the town. The villagers rest.'))
+                                .append($('<h4>').text(config.game.actions.prompt))
                         }
                     } 
                 }

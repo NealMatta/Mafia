@@ -138,7 +138,7 @@ class Game {
 				default:
 					//villagers
 					return {
-						prompt: '',
+						prompt: 'It is night in the town. The villagers rest.',
 						choices: [],
 						teammates: [],
 						confirmationCount: '',
