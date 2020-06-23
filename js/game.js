@@ -42,19 +42,19 @@ class Game {
 		}
 	}
 	getPlayerList(status = 'All') {
-		//return [{username: username, isDead: isDead},...]
+		//return [{username: username, isDead: isDead, isOnline: isOnline},...]
 		var to_return = [];
 		if (status == 'Alive') {
 			//if status is overrided to only request alive players
 			for (var sid in this.players) {
 				if (!this.players[sid].isDead) {
-					to_return.push({ username: this.players[sid].username, isDead: this.players[sid].isDead });
+					to_return.push({ username: this.players[sid].username, isDead: this.players[sid].isDead, isOnline: this.players[sid].isOnline });
 				}
 			}
 		} else {
 			//if an argument is not provided (default behavior)
 			for (var sid in this.players) {
-				to_return.push({ username: this.players[sid].username, isDead: this.players[sid].isDead });
+				to_return.push({ username: this.players[sid].username, isDead: this.players[sid].isDead, isOnline: this.players[sid].isOnline });
 			}
 		}
 		return to_return;
@@ -227,7 +227,13 @@ class Game {
 			}
         }
         return false;
-	}
+    }
+    playerWentOffline(sessionID) {
+        this.players[sessionID].wentOffline();
+    }
+    playerCameOnline(sessionID) {
+        this.players[sessionID].cameOnline();
+    }
 	clientPackage(sessionID) {
 		return {
 			me: this.players[sessionID], //so client can can read their own privateLog, role, and status

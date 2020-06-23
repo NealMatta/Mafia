@@ -149,13 +149,16 @@
                         }
                     }
                     else {
-                        //populate player list with those in game
+                        // Populate player list with those in game
                         for (var u=0; u<config.game.players.length; u++) {
                             config.game.players[u].isDead
                                 ? $('#playersContainer').append(
                                     $('<div class="card bg-dark">').append(
                                         $('<div class="card-body p-2 text-secondary">').text(
                                             config.game.players[u].username
+                                        )
+                                        .append(
+                                            config.game.players[u].isOnline ? $('') : $('<img src="/assets/images/plug.svg" class="float-right" title="Player offline">')
                                         )
                                     )
                                 )
@@ -164,10 +167,13 @@
                                         $('<div class="card-body p-2">').text(
                                             config.game.players[u].username
                                         )
+                                        .append(
+                                            config.game.players[u].isOnline ? $('') : $('<img src="/assets/images/plug.svg" class="float-right" title="Player offline">')
+                                        )
                                     )
                                 );
                         }
-                        //populate rolemates
+                        // Populate rolemates
                         for (var u=0; u<config.game.teammates.length; u++) {
                             $('#teammateContainer').append(
                                 $('<div class="card bg-info">').append(

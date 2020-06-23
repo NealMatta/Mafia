@@ -32,6 +32,7 @@ const FORBIDDEN_USERNAMES = [
 // ===== EXPRESS EVENTS =====
 // ==========================
 app.use('/styles', express.static(__dirname + '/styles')); // Provide client with (static) stylesheets
+app.use('/assets', express.static(__dirname + '/assets')); // Provide client with (static) assets
 // app.use('/scripts', express.static(__dirname + '/scripts')); //provide client with (static) scripts
 
 // Intermediary session definition to allow socketio to handle express sessions
@@ -201,9 +202,15 @@ gamesocket.on('connection', socket => {
 					); //e.g. rooms for mafia in a game are id'd by gameXXXXgameXXXX where the first half is the game room and second half id's the role
 				}
                 // Let room know about reconnection
-                let new_message = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
-				rooms[roomToJoin].chatHistory.push(new_message);
-                gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
+                rooms[roomToJoin].game.playerCameOnline(SESSION_ID);
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false])); 
+                }
+                // let new_message = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has reconnected.');
+				// rooms[roomToJoin].chatHistory.push(new_message);
+                // gamesocket.to(roomToJoin).emit('new chat', new_message); //push message to everyone else in room
 			}
 			// If they're not part of the game, add them as spectator
 			// Currently should not be implemented because Game doesn't support spectators that well yet
@@ -405,9 +412,15 @@ gamesocket.on('connection', socket => {
 			}
 			// if the game is ongoing and the disconnecting client was part of it, warn the room of this disconnect
 			else if (rooms[roomToJoin].game.players[SESSION_ID]) {
-				let msg = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.');
-				rooms[roomToJoin].chatHistory.push(msg);
-				gamesocket.in(roomToJoin).emit('new chat', msg);
+                rooms[roomToJoin].game.playerWentOffline(SESSION_ID);
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false])); 
+                }
+				// let msg = new Message(rooms[roomToJoin].game.players[SESSION_ID].username + ' has disconnected.');
+				// rooms[roomToJoin].chatHistory.push(msg);
+				// gamesocket.in(roomToJoin).emit('new chat', msg);
             }
             
 		}

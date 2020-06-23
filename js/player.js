@@ -14,9 +14,16 @@ class Player {
 		this.isDead = true;
 		this.role = 'Spectator';
 		this.privateLog.push(new Message('You have been killed.'));
-	}
+    }
+    wentOffline() {
+        this.isOnline = false;
+    }
+    cameOnline() {
+        this.isOnline = true;
+    }
 	setRole(role) {
-		this.role = role;
+        this.role = role;
+        this.isOnline = true;
 	}
 }
 
