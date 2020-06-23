@@ -44,6 +44,20 @@ function someoneDiedMessage(who_died) {
     return choices[randomNumBetween(0, choices.length-1)];
 }
 
+function noOneExecutedMessage(live_players) {
+    //live_players should be an array of usernames
+    let choices = [
+        'After a day of commotion in the town square, nobody was sentenced to die.',
+        'Nobody was killed today.',
+        'The town was eerily calm today and nobody was sentenced to hang.',
+        'A peaceful day was had by all.',
+        'The townspeople came together and decided not to prosecute anybody',
+        'A democratic decision was made to defer justice to tomorrow. Nobody was sentenced to death.',
+        live_players[randomNumBetween(0, live_players.length-1)] + ' went for a swim. ' + live_players[randomNumBetween(0, live_players.length-1)] + ' frolicked in the park. Nobody died today.'
+    ];
+    return choices[randomNumBetween(0, choices.length-1)];
+}
+
 function someoneExecutedMessage(who_died) {
     //who_died is a username
     let choices = [
@@ -56,11 +70,15 @@ function someoneExecutedMessage(who_died) {
     return choices[randomNumBetween(0, choices.length-1)];
 }
 
+const ABSTAIN = 'No Execution Today';
+
 module.exports = {
 	currentTime,
 	randomNumBetween,
     generateRoomCode,
     noOneDiedMessage,
     someoneDiedMessage,
-    someoneExecutedMessage
+    someoneExecutedMessage,
+    noOneExecutedMessage,
+    ABSTAIN
 };

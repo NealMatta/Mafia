@@ -185,7 +185,13 @@ class Game {
 		let voter_role = this.players[sessionID].role;
 		if (this.gamePhase == 'Day') {
 			let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID].username); // Either session id of victim or false
-			if (vote_result) {
+            if (vote_result == g.ABSTAIN) {
+                // Move the game forward
+                this.advance();
+                // Return a message for the public log
+                return g.noOneExecutedMessage(this.getPlayerList('Alive'));
+            }
+            else if (vote_result) {
                 // Group has decided to execute a player. Carry it out
                 this.players[vote_result].kill();
                 // Move the game forward
@@ -193,7 +199,8 @@ class Game {
                 // Return a message for the public log
                 return g.someoneExecutedMessage(this.players[vote_result].username);
 			}
-		} else {
+        }
+        else {
 			// It's Night. Confirm vote in the appropriate ballot
 			let vote_result = this.ballots[voter_role].confirmVote(this.players[sessionID].username);
 			if (vote_result) {

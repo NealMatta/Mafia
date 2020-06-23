@@ -1,3 +1,5 @@
+const g = require('./global');
+
 class Ballot {
     constructor(players, voting_group) {
         this.players = players;
@@ -6,6 +8,12 @@ class Ballot {
 
         this.choices = {}; //key:value is username:boolean, whether it is currently selected
         this.teammates = {}; //key:value is username:boolean, whether teammate has confirmed a vote
+
+        // Add an option for the town to not kill anybody
+        if (this.voting_group == 'Village') {
+            this.choices[g.ABSTAIN] = false;
+        }
+        
         for (var sid in this.players) {
             if (!this.players[sid].isDead) {
                 // choices value
@@ -95,8 +103,16 @@ class Ballot {
     close() {
         // Close the Ballot
         this.isOpen = false;
+
         // Return the outcome of the vote
         let usernameOfSelection = Object.keys(this.choices).filter(username => this.choices[username]); //should be a string with a username
+
+        // If the result of the vote is abstention...
+        if (usernameOfSelection == g.ABSTAIN) {
+            return g.ABSTAIN;
+        }
+
+        // If not then return the session ID of the chosen
         let idOfSelection = Object.keys(this.players).filter(sid => this.players[sid].username == usernameOfSelection[0]);
         console.log('Closing ballot and returning result: ', idOfSelection[0]); //should be a session ID
         return idOfSelection[0];

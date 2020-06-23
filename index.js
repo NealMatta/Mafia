@@ -25,7 +25,12 @@ const FORBIDDEN_USERNAMES = [
     'ABSTAIN.',
     'NO VOTE',
     'NONE OF THE ABOVE',
-    'NEITHER'
+    'NEITHER',
+    'NO ONE',
+    'NOBODY',
+    'DON\'T KILL ANYBODY TODAY',
+    'NO HANGINGS TODAY',
+    'NO EXECUTION TODAY'
 ];
 
 // ==========================
