@@ -5,18 +5,18 @@
 		<!-- <link rel="stylesheet" type="text/css" href="styles/style.css" /> -->
 		<!-- <link rel="stylesheet" type="text/css" href="styles/css/style.css" /> -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-		<!-- <script
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <!-- <script
 			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
 			integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
 			crossorigin="anonymous"
 		></script> -->
-		<!-- <script
-			src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-			integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-			crossorigin="anonymous"
-		></script> -->
+        <script 
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" 
+            integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+            crossorigin="anonymous"
+        ></script>
 	</head>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
     <script>
         $(function() {
@@ -30,8 +30,26 @@
             let privateChatInput = $('#privateChatInput');
             let privateChatUL = $('#privateChat');
 
-            //Set a random usernae for now
-            // socket.emit('name set', 'user'+Math.random().toString(36).substr(2, 4));
+            // Prompt for a username if someone is joining via a link
+            socket.on('prompt for username', (roomName) => {
+                console.log(roomName);
+                $('#staticBackdrop').modal('show');
+                $('#staticBackdrop').on('shown.bs.modal', function () {
+                    $('#staticBackdropLabel').text('Joining ' + roomName);
+                    $('#usernameSubmission').on('submit', function(e) {
+                        e.preventDefault();
+                        socket.emit('join via link', $('#usernameInput').val(), function(e) {
+                            // Error handling
+                            $('#joinErrorMsg').text(e);
+                        });
+                    })
+                })
+
+            })
+
+            socket.on('grant access', url => {
+				$('#staticBackdrop').modal('hide').then(function() {modal('dispose')});
+			});
 
             // Public Messaging and Logs
             publicChatForm.submit(function(e) {
@@ -509,6 +527,22 @@
                     </div>                    
                 </div>
             </div>
-		</div>
+        </div>
+        <div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="staticBackdropLabel"></h5>
+                    </div>
+                    <div class="modal-body">
+                        <form id="usernameSubmission">
+                            <input id="usernameInput" class="form-group w-100" type="text" placeholder="Username" minlength="1" maxlength="24" autocomplete="off">
+                            <span id="joinErrorMsg" class="text-center text-danger"></span>
+                            <input class="form-group btn btn-primary float-right" type="submit" value="Join">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 	</body>
 </html>
