@@ -45,11 +45,13 @@ p, a, span, div, li {
 .homepage_bg {
     /* background: rgb(31, 31, 31); */
     background: #1c1c1c;
-    background: radial-gradient(circle, rgba(28,28,28,1) 60%, rgba(0,0,0,1) 100%);
+    background-image: radial-gradient(circle, rgba(39, 39, 39, 0.8) 60%, rgba(0,0,0,0.9) 95%), url('../assets/images/BG_img.png');
+    background-size: cover;
+    background-position: bottom;
 }
 
 .homepage_tile {
-    background: #151515;
+    background: rgba(21, 21, 21, 0.8);
 }
 
 .game_body {
