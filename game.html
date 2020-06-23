@@ -209,18 +209,24 @@
                                 // )
                         }
 
-                        let confirmationCount = String(config.game.actions.confirmationCount);
-                        let votesNeeded = String(config.game.actions.votesNeeded);
-                        let countFraction = confirmationCount + '/' + votesNeeded;
-                        $('#actionBox')
-                            .empty()
-                            .append($('<h4>').text(config.game.actions.prompt))
-                            .append(action_choices)
-                            .append($('<input id="confirmationBox" class="btn btn-primary" type="button" value="Confirm">'))
-                            .append($('<input id="unconfirmationBox" class="btn btn-danger" type="button" value="Revoke">'))
-                            .append($('<p>').text('Confirmed: ' + countFraction))
-                            .append(action_teammates);
-                        
+                        if (config.game.actions.prompt != '') {
+                            let confirmationCount = String(config.game.actions.confirmationCount);
+                            let votesNeeded = String(config.game.actions.votesNeeded);
+                            let countFraction = confirmationCount + '/' + votesNeeded;
+                            $('#actionBox')
+                                .empty()
+                                .append($('<h4>').text(config.game.actions.prompt))
+                                .append(action_choices)
+                                .append($('<input id="confirmationBox" class="btn btn-primary" type="button" value="Confirm">'))
+                                .append($('<input id="unconfirmationBox" class="btn btn-danger" type="button" value="Revoke">'))
+                                .append($('<p>').text('Confirmed: ' + countFraction))
+                                .append(action_teammates);
+                        }
+                        else {
+                            $('#actionBox')
+                                .empty()
+                                .append($('<h4>').text('It is night in the town. The villagers rest.'))
+                        }
                     } 
                 }
                 // Room Info
