@@ -11,7 +11,8 @@ class Game {
 		this.numMafia = numMafia;
 		this.assignRoles();
 		this.playerkey = players; //holds original roles, for distribution in postgame
-		this.ballots = {}; //collection of active Ballot objects
+        this.ballots = {}; //collection of active Ballot objects
+        this.active_ballot_results = {Mafia: false, Sheriff: false, Doctor: false}; //status of ballots
 		this.gamePhase = 'Night';
 		this.advance(); // Move forward from night to day and instantiate the first ballot
 		this.roleRoomCodes = {
@@ -69,7 +70,9 @@ class Game {
 		return to_return;
 	}
 	advance() {
-		// Generate Clean Ballots
+        // Clear Ballot Results
+        this.active_ballot_results = {Mafia: false, Sheriff: false, Doctor: false};
+        // Generate Clean Ballots
 		this.ballots = {
 			Mafia: new Ballot(this.players, 'Mafia'),
 			Sheriff: new Ballot(this.players, 'Sheriff'),
@@ -122,7 +125,7 @@ class Game {
 				default:
 					//villagers
 					return {
-						prompt: '',
+						prompt: 'It is night time.',
 						choices: [],
 						teammates: [],
 						confirmationCount: '',
@@ -134,8 +137,8 @@ class Game {
 	}
 	sendPrivateMessage(text, to, from = '', type = 'System') {
 		//to == role; from == session ID
-		//type == 'Private' or 'System'
-		let message = new Message(text, type, this.players[from].username, to);
+        //type == 'Private' or 'System'
+        let message = this.players[from] ? new Message(text, type, this.players[from].username, to) : new Message(text, type, '', to);
 		//example output: '[10:14:33] (Alice > Mafia) We should kill Bob'
 		for (var sid in this.players) {
 			if (this.players[sid].role == to) {
@@ -161,38 +164,56 @@ class Game {
 		} else {
 			// It's Night. Confirm vote in the appropriate ballot
 			this.ballots[voter_role].unconfirmVote(this.players[sessionID].username);
-		}
+        }
+        return false;
 	}
 	confirmVote(sessionID) {
 		// Handling if a voter checks their box
 		let voter_role = this.players[sessionID].role;
 		if (this.gamePhase == 'Day') {
-			let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID].username);
+			let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID].username); // Either session id of victim or false
 			if (vote_result) {
-				// At this point, it is day time and the group has come to a conclusion to kill a specific member
-
-				// 1. Kill the Player
-				for (let [key, player] of Object.entries(this.players)) {
-					if (key === vote_result) {
-						console.log('killed player', player);
-						player.kill();
-						break;
-					}
-				}
-				// 2. Notify public log of death
-				let msg = this.players[vote_result].username + ' is ded XoX :(';
-
-				// 3. Advance the game
-				this.advance();
+                // Group has decided to execute a player. Carry it out
+                this.players[vote_result].kill();
+                // Move the game forward
+                this.advance();
+                // Return a message for the public log
+                return g.someoneExecutedMessage(this.players[vote_result].username);
 			}
 		} else {
 			// It's Night. Confirm vote in the appropriate ballot
 			let vote_result = this.ballots[voter_role].confirmVote(this.players[sessionID].username);
 			if (vote_result) {
-				// Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
-				this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role);
+                // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
+                this.active_ballot_results[voter_role] = vote_result;
+                this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role);
+                if (!(Object.values(this.active_ballot_results).includes(false))) {
+                    // All nightly ballots have closed. Calculate results.
+                    let mafia_result = this.active_ballot_results['Mafia'];
+                    let sheriff_result = this.active_ballot_results['Sheriff'];
+                    let doctor_result = this.active_ballot_results['Doctor'];
+                    // Inform sheriff about who they investigated. Right now, this is the role. Possibly this should only be mafia or not
+                    this.sendPrivateMessage('Your investigation finds that ' + this.players[sheriff_result].username + '\'s role is: ' + this.players[sheriff_result].role, 'Sheriff');
+                    // Carry out result of mafia-doctor stuff
+                    if (mafia_result == doctor_result) {
+                        // No one dies
+                        // Move the game forward
+                        this.advance();
+                        this.sendPrivateMessage('You are surprised to hear that ' + this.players[mafia_result].username + ' survived.', 'Mafia');
+                        this.sendPrivateMessage('Thanks to you, a life was saved last night.', 'Doctor');
+                        return g.noOneDiedMessage(this.getPlayerList('Alive'));
+                    }
+                    else {
+                        this.players[mafia_result].kill();
+                        // Move the game forward
+                        this.advance();
+                        this.sendPrivateMessage('You pretend to be shocked at the news about ' + this.players[mafia_result].username + '.', 'Mafia');
+                        return g.someoneDiedMessage(this.players[mafia_result].username);
+                    }
+                }
 			}
-		}
+        }
+        return false;
 	}
 	clientPackage(sessionID) {
 		return {

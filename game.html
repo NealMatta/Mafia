@@ -92,11 +92,11 @@
                 if (config.should_reconstruct[1]) {
                     if (config.game == null) {
                         //disable private chat
-                        $('#sendPrvMsg input').attr('disabled','true');
+                        $('#sendPrvMsg input').attr('disabled',true);
                     }
                     else {
                         //enable private chat
-                        $('#sendPrvMsg input').attr('disabled','false');
+                        $('#sendPrvMsg input').attr('disabled',false);
                         //refresh private chat log
                         privateChatUL.empty();
                         for (var m=0; m<config.game.me.privateLog.length; m++) {
@@ -108,7 +108,7 @@
                             else { //type == 'System'
                                 new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
                             }
-                            publicChatUL.append(new_message);
+                            privateChatUL.append(new_message);
                         }
                     }
                 }
