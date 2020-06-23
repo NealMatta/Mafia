@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html class="h-100">
 	<head>
-		<title>MAFIA</title>
-		<!-- <link rel="stylesheet" type="text/css" href="styles/style.css" /> -->
+        <title>MAFIA</title>
+        <link href="https://fonts.googleapis.com/css2?family=Chicle&family=Lacquer&family=Metal+Mania&family=Mirza:wght@400;700&family=Nosifer&family=Odibee+Sans&display=swap" rel="stylesheet"> 
+        <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica+SC&family=Lato&display=swap" rel="stylesheet"> 
+        <link rel="stylesheet" type="text/css" href="styles/style.css" />
 		<!-- <link rel="stylesheet" type="text/css" href="styles/css/style.css" /> -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
         <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
@@ -180,6 +182,9 @@
                 // Actions
                 if (config.should_reconstruct[3]) {
                     if (config.game == null) {
+                        // Day/Night Styling
+                        $('.game_body').removeClass('daytime').removeClass('nighttime')
+
                         //give host start-game options
                         $('#actionBox').empty();
                         if (config.isHost) {
@@ -190,6 +195,11 @@
                         }
                     }
                     else {
+                        // Day/Night Styling
+                        config.game.gamePhase == 'Day'
+                            ? $('.game_body').removeClass('daytime').addClass('nighttime')
+                            : $('.game_body').removeClass('nighttime').addClass('daytime');
+
                         let action_choices = $('<div class="card-columns" style="column-count: 3">');
                         for (var player in config.game.actions.choices) {
                             (config.game.actions.choices[player]) //If the player is selected or not
@@ -290,241 +300,251 @@
         });
     </script>
 	<body class="h-100">
-		<div class="container-fluid h-100 p-4">
-			<div class="row h-100">
-			    <div class="col-3 mh-100 border d-flex flex-column">
-                    <h1 class="m-0">MAFIA</h1>
-                    <p class="lead m-0">Room Name: <span id="roomName"></span></p>
-                    <p class="lead m-0">Room Code: <span id="roomCode"></span></p>
-                    <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
-                        <ul id="publicChat" class="list-group list-group-flush">
-                            <li class="list-group-item">Hello World First</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World</li>
-                            <li class="list-group-item">Hello World Last</li>
-                        </ul>
-                    </div>
-                    <form id="sendPubMsg" class="input-group">
-                        <input id="publicChatInput" type="text" class="form-control">
-                        <div class="input-group-append">
-                            <input class="btn btn-outline-secondary" type="submit" value="Send">
-                        </div>
-                    </form>
-                </div>
-                <div class="col-9 mh-100">
-                    <div class="row h-25 mh-25 overflow-auto border">
-                        <div class="col">
-                            <h3>Players</h3>
-                            <div id="playersContainer" class="card-columns" style="column-count: 6">
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 1</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 2</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 3</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 4</div>
-                                </div>
-                                <div class="card bg-dark">
-                                    <div class="card-body p-2">Player 5</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 6</div>
-                                </div>
-                                <div class="card bg-info">
-                                    <div class="card-body p-2">Player 7</div>
-                                </div>
-                                <div class="card bg-dark">
-                                    <div class="card-body p-2">Player 8</div>
-                                </div>
+        <div class="container-fluid h-100 p-3 game_body">
+            <div class="container-fluid h-100">
+                <div class="row h-100">
+                    <div class="col-3 mh-100 p-1">
+                        <div class="mh-100 h-100 d-flex flex-column p-2 game_container">
+                            <h1 class="m-0">MAFIA</h1>
+                            <p class="lead m-0">Room Name: <span id="roomName"></span></p>
+                            <p class="lead m-0">Room Code: <span id="roomCode"></span></p>
+                            <div class="mh-100 d-flex flex-column-reverse flex-grow-1 overflow-auto">
+                                <ul id="publicChat" class="list-group list-group-flush">
+                                    <li class="list-group-item">Hello World First</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World</li>
+                                    <li class="list-group-item">Hello World Last</li>
+                                </ul>
                             </div>
+                            <form id="sendPubMsg" class="input-group">
+                                <input id="publicChatInput" type="text" class="form-control">
+                                <div class="input-group-append">
+                                    <input class="btn btn-outline-secondary" type="submit" value="Send">
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div class="row h-75 mh-75 border">
-                        <div class="col-7 mh-100 border">
-                            <h3>Actions</h3>
-                            <div class="d-none hostActions">
-                                <p class="lead">Game Setup</p>
-                                <form class="beginGameForm">
-                                    <div class="form-inline pb-2">
-                                        <label>How many mafia?</label>
-                                        <input class="form-control ml-auto numMafia" type="number" min="1">
-                                    </div>
-                                    <div class="form-inline pb-2">
-                                        <label>How many sheriffs?</label>
-                                        <input class="form-control ml-auto numSheriff" type="number" min="1">
-                                    </div>
-                                    <div class="form-inline pb-2">
-                                        <label>How many doctors?</label>
-                                        <input class="form-control ml-auto numDoctor" type="number" min="1">
-                                    </div>
-                                    <div class="form-group pb-2 text-center">
-                                        <input class="form-control btn btn-success w-25" type="submit" value="Start Game">
-                                        <p class="startgameerror text-danger"></p>
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="actionBox">
-                                <!-- Example action box content -->
-                                <!-- <h4>Select who to kill</h4>
-                                <div class="card-columns" style="column-count: 3">
-                                    <div class="card bg-info">
-                                        <div class="card-body p-2">Player 1</div>
-                                    </div>
-                                    <div class="card bg-info">
-                                        <div class="card-body p-2">Player 2</div>
-                                    </div>
-                                    <div class="card bg-info">
-                                        <div class="card-body p-2">Player 3</div>
-                                    </div>
-                                    <div class="card bg-danger">
-                                        <div class="card-body p-2">Player 4</div>
-                                    </div>
-                                    <div class="card bg-info">
-                                        <div class="card-body p-2">Player 6</div>
-                                    </div>
-                                    <div class="card bg-info">
-                                        <div class="card-body p-2">Player 7</div>
-                                    </div>
-                                </div>
-                                <input id="confirmationBox" class="btn btn-success" type="checkbox">
-                                <label>Confirm</label>
-                                <p>Confirmed: <span>(<span id="count">0</span>/2)</span></p>
-                                <script>
-                                    $(function() {
-                                        $('#confirmationBox').on('change',function(){
-                                            $(this).is(':checked') ? $('#count').text('1') : $('#count').text('0');
-                                        });
-                                    })
-                                </script> -->
-                            </div>
-                        </div>
-                        <div class="col-5 mh-100">
-                            <div class="row h-25 mh-25 border">
-                                <div class="col">
-                                    <h3>You: <span id="userName"></span> Role: <span id="userRole">N/A</span></h3>
-                                    <div id="teammateContainer" class="card-columns" style="column-count: 3">
+                    <div class="col-9 mh-100">
+                        <div class="row h-25 mh-25 overflow-auto">
+                            <div class="col h-100 p-1">
+                                <div class="h-100 p-2 game_container">
+                                    <h3>Players</h3>
+                                    <div id="playersContainer" class="card-columns" style="column-count: 6">
+                                        <div class="card bg-info">
+                                            <div class="card-body p-2">Player 1</div>
+                                        </div>
                                         <div class="card bg-info">
                                             <div class="card-body p-2">Player 2</div>
                                         </div>
                                         <div class="card bg-info">
                                             <div class="card-body p-2">Player 3</div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row h-75 mh-75 border">
-                                    <!-- <h3>It is <span>Night</span></h3> -->
-                                <div class="col mh-100 d-flex flex-column">
-                                    <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
-                                        <ul id="privateChat" class="list-group list-group-flush">
-                                            
-                                            <li class="list-group-item">Hello World First</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World</li>
-                                            <li class="list-group-item">Hello World Last</li>
-                                        </ul>
-                                    </div>
-                                    <form id="sendPrvMsg" class="input-group">
-                                        <input id="privateChatInput" type="text" class="form-control">
-                                        <div class="input-group-append">
-                                            <input class="btn btn-outline-secondary" type="submit" value="Send">
+                                        <div class="card bg-info">
+                                            <div class="card-body p-2">Player 4</div>
                                         </div>
-                                    </form>
+                                        <div class="card bg-dark">
+                                            <div class="card-body p-2">Player 5</div>
+                                        </div>
+                                        <div class="card bg-info">
+                                            <div class="card-body p-2">Player 6</div>
+                                        </div>
+                                        <div class="card bg-info">
+                                            <div class="card-body p-2">Player 7</div>
+                                        </div>
+                                        <div class="card bg-dark">
+                                            <div class="card-body p-2">Player 8</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>                    
+                        <div class="row h-75 mh-75">
+                            <div class="col-7 mh-100 p-1">
+                                <div class="h-100 p-2 game_container">
+                                    <h3>Actions</h3>
+                                    <div class="d-none hostActions">
+                                        <p class="lead">Game Setup</p>
+                                        <form class="beginGameForm">
+                                            <div class="form-inline pb-2">
+                                                <label>How many mafia?</label>
+                                                <input class="form-control ml-auto numMafia" type="number" min="1">
+                                            </div>
+                                            <div class="form-inline pb-2">
+                                                <label>How many sheriffs?</label>
+                                                <input class="form-control ml-auto numSheriff" type="number" min="1">
+                                            </div>
+                                            <div class="form-inline pb-2">
+                                                <label>How many doctors?</label>
+                                                <input class="form-control ml-auto numDoctor" type="number" min="1">
+                                            </div>
+                                            <div class="form-group pb-2 text-center">
+                                                <input class="form-control btn btn-success w-25" type="submit" value="Start Game">
+                                                <p class="startgameerror text-danger"></p>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div id="actionBox">
+                                        <!-- Example action box content -->
+                                        <!-- <h4>Select who to kill</h4>
+                                        <div class="card-columns" style="column-count: 3">
+                                            <div class="card bg-info">
+                                                <div class="card-body p-2">Player 1</div>
+                                            </div>
+                                            <div class="card bg-info">
+                                                <div class="card-body p-2">Player 2</div>
+                                            </div>
+                                            <div class="card bg-info">
+                                                <div class="card-body p-2">Player 3</div>
+                                            </div>
+                                            <div class="card bg-danger">
+                                                <div class="card-body p-2">Player 4</div>
+                                            </div>
+                                            <div class="card bg-info">
+                                                <div class="card-body p-2">Player 6</div>
+                                            </div>
+                                            <div class="card bg-info">
+                                                <div class="card-body p-2">Player 7</div>
+                                            </div>
+                                        </div>
+                                        <input id="confirmationBox" class="btn btn-success" type="checkbox">
+                                        <label>Confirm</label>
+                                        <p>Confirmed: <span>(<span id="count">0</span>/2)</span></p>
+                                        <script>
+                                            $(function() {
+                                                $('#confirmationBox').on('change',function(){
+                                                    $(this).is(':checked') ? $('#count').text('1') : $('#count').text('0');
+                                                });
+                                            })
+                                        </script> -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-5 mh-100">
+                                <div class="row h-25 mh-25">
+                                    <div class="col h-100 p-1">
+                                        <div class="h-100 p-2 game_container">
+                                            <h3>You: <span id="userName"></span> Role: <span id="userRole">N/A</span></h3>
+                                            <div id="teammateContainer" class="card-columns" style="column-count: 3">
+                                                <div class="card bg-info">
+                                                    <div class="card-body p-2">Player 2</div>
+                                                </div>
+                                                <div class="card bg-info">
+                                                    <div class="card-body p-2">Player 3</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row h-75 mh-75">
+                                    <div class="col h-100 p-1">
+                                        <div class="h-100 p-2 d-flex flex-column game_container">
+                                            <div class="d-flex flex-column-reverse flex-grow-1 overflow-auto">
+                                                <ul id="privateChat" class="list-group list-group-flush">
+                                                    <li class="list-group-item">Hello World First</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World</li>
+                                                    <li class="list-group-item">Hello World Last</li>
+                                                </ul>
+                                            </div>
+                                            <form id="sendPrvMsg" class="input-group">
+                                                <input id="privateChatInput" type="text" class="form-control">
+                                                <div class="input-group-append">
+                                                    <input class="btn btn-outline-secondary" type="submit" value="Send">
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>                    
+                    </div>
                 </div>
             </div>
         </div>
