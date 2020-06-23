@@ -19,6 +19,7 @@ var public_rooms = {}; // Contains all public, unstarted rooms as roomname:roomi
 // A list of prohibited usernames. This could end up including profanity or whatever, but mainly it's to avoid confusion.
 // For example, a username like "abstain" would be confusing during a vote on who to kill.
 const FORBIDDEN_USERNAMES = [
+    '',
     'ABSTAIN',
     'ABSTAIN!',
     'ABSTAIN.',
@@ -93,8 +94,8 @@ homesocket.on('connection', socket => {
 			errorback('Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(roomName)) {
 			errorback('Room with this name already exists.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			//name and username valid; make the room.
 			room = new Room(roomName, isPublic, socket.request.session.id);
@@ -122,8 +123,8 @@ homesocket.on('connection', socket => {
 			errorback('Error joining session. Please refresh and try again.');
 		} else if (rooms[public_rooms[roomName]].getMemberList().includes(username)) {
 			errorback('That username is already in use in this lobby.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			//name and session are valid; join the room
 			rooms[public_rooms[roomName]].addPlayer(socket.id, SESSION_ID, username);
@@ -139,8 +140,8 @@ homesocket.on('connection', socket => {
 			roomCode = 'game' + input.toUpperCase();
 		} else if (input.length == 8) {
 			roomCode = input.toUpperCase();
-		} else if (FORBIDDEN_USERNAMES.includes(username.toUpperCase())) {
-            errorback('Please use a different username.')
+		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+            errorback('Please enter a valid username.')
         } else {
 			errorback('Invalid room code.');
 		} 
@@ -178,7 +179,7 @@ gamesocket.on('connection', socket => {
         //provide user with all needed room information
         socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
         //update socket session link
-        rooms[roomToJoin].socket_session_link[SESSION_ID] = socket.id;
+        rooms[roomToJoin].updateSocketLink(socket.id, SESSION_ID);
 
         // Update everyone's player lists
         for (var session_id in rooms[roomToJoin].socket_session_link) {
@@ -218,16 +219,28 @@ gamesocket.on('connection', socket => {
     
 
 	socket.on('join via link', (name, errorback) => {
-        // errorback(error_message) is a callback on the clientside that will display the error message when name is invalid
 
-        // Ensure nobody's trying to inject a username change
-        if (!(Object.keys(rooms[roomToJoin].players).includes(SESSION_ID))) {
-            if (rooms[roomToJoin].getMemberList().includes(name)) {
-                errorback('That name is already in use in this game');
-            }
-            else {
-                rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
-                socket.emit('send to room', rooms[public_rooms[roomName]].code);
+        console.log(SESSION_ID, socket.id)
+        console.log(rooms[roomToJoin].members)
+        // errorback(error_message) is a callback func on the clientside that will display the error message
+        // Make sure room still exists
+        if (rooms[roomToJoin]) {
+            // Ensure nobody's trying to inject a username change or something
+            if (!(Object.keys(rooms[roomToJoin].members).includes(SESSION_ID))) {
+                if (rooms[roomToJoin].getMemberList().includes(name)) {
+                    errorback('That name is already in use in this game');
+                }
+                else if (FORBIDDEN_USERNAMES.includes(name.trim().toUpperCase())) {
+                    errorback('Please enter a valid username.')
+                }
+                else {
+                    console.log('adding')
+                    rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
+                    // Destroy the modal on the uesr's page
+                    socket.emit('grant access', rooms[roomToJoin].code);
+                    // Update user's page completely
+                    socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
+                }
             }
         }
 	});
@@ -235,16 +248,17 @@ gamesocket.on('connection', socket => {
 	socket.on('game start', (options, errorback) => {
 		//options is {mafia:integer, sheriffs:integer, doctors:integer}
 		//errorback(error_message) is a callback on the clientside that will display the error message when the game can't be started
-		if (Object.keys(rooms[roomToJoin].members).length < 4) {
+        if (Object.keys(rooms[roomToJoin].members).length < 4) {
 			errorback('There must be at least four players to start a game');
-		} else if (
-			parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) >
-			Object.keys(rooms[roomToJoin].members).length
-		) {
+        }
+        else if ([parseInt(options.mafia), parseInt(options.sheriffs), parseInt(options.doctors)].includes(0)) {
+            errorback('There must be at least one of each role')
+        }
+        else if (parseInt(options.mafia) + parseInt(options.sheriffs) + parseInt(options.doctors) > Object.keys(rooms[roomToJoin].members).length) {
 			errorback('Too many roles have been assigned');
-		} else {
+        }
+        else {
             //create new game
-            console.log(options);
 			rooms[roomToJoin].game = new Game(
 				rooms[roomToJoin].members,
 				options.sheriffs,
@@ -286,7 +300,7 @@ gamesocket.on('connection', socket => {
 				// console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
 				if (sender_role != 'Villager') {
 					// everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-					let message = rooms[roomToJoin].sendPrivateMessage(msg, sender_role, sender_name, 'Private');
+					let message = rooms[roomToJoin].game.sendPrivateMessage(msg, sender_role, sender_name, 'Private');
 					gamesocket
 						.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
 						.emit('new private chat', message);
@@ -327,28 +341,41 @@ gamesocket.on('connection', socket => {
             }
         }
     });
-    socket.on('confirm vote', (checkbox_status) => {
+    socket.on('confirm vote', (confirmation_status) => {
         // Ensure no funny business
         if ((rooms[roomToJoin]) && (rooms[roomToJoin].game != null) && (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
-            // checkbox_status should be a Bool of whether or not the client's box is now checked
+            // confirmation_status should be a Bool of whether or not the client is confirming or not
             // Confirm or unconfirm vote based on this bool
-            checkbox_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
-            // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
-            if (rooms[roomToJoin].game.gamePhase == 'Day') {
+            let result = confirmation_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
+            if (result) {
+                // Voting is complete. Inform everyone of the results and update action boxes and private chats.
+                // result is a message to be sent to the public chat
+                rooms[roomToJoin].chatHistory.push(new Message(result));
+                gamesocket.in(roomToJoin).emit('new chat', new Message(result));
                 for (var session_id in rooms[roomToJoin].socket_session_link) {
                     gamesocket
                         .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, true, true, false, true])); 
                 }
             }
             else {
-                // If Nighttime
-                let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-                for (var session_id in rooms[roomToJoin].socket_session_link) {
-                    if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
+                if (rooms[roomToJoin].game.gamePhase == 'Day') {
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
                         gamesocket
-                        .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                    }
+                }
+                else {
+                    // If Nighttime
+                    let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
+                        if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                            gamesocket
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                        }
                     }
                 }
             }

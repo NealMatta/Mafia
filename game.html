@@ -38,7 +38,8 @@
                 $('#staticBackdrop').modal('show');
                 $('#staticBackdrop').on('shown.bs.modal', function () {
                     $('#staticBackdropLabel').text('Joining ' + roomName);
-                    $('#usernameSubmission').on('submit', function() {
+                    $('#usernameSubmission').on('submit', function(e) {
+                        e.preventDefault();
                         socket.emit('join via link', $('#usernameInput').val(), function(e) {
                             // Error handling
                             $('#joinErrorMsg').text(e);
@@ -48,8 +49,8 @@
 
             })
 
-            socket.on('send to room', url => {
-				window.open(url, '_self');
+            socket.on('grant access', url => {
+				$('#staticBackdrop').modal('hide').then(function() {modal('dispose')});
 			});
 
             // Public Messaging and Logs
@@ -111,11 +112,11 @@
                 if (config.should_reconstruct[1]) {
                     if (config.game == null) {
                         //disable private chat
-                        $('#sendPrvMsg input').attr('disabled','true');
+                        $('#sendPrvMsg input').attr('disabled',true);
                     }
                     else {
                         //enable private chat
-                        $('#sendPrvMsg input').attr('disabled','false');
+                        $('#sendPrvMsg input').attr('disabled',false);
                         //refresh private chat log
                         privateChatUL.empty();
                         for (var m=0; m<config.game.me.privateLog.length; m++) {
@@ -127,7 +128,7 @@
                             else { //type == 'System'
                                 new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
                             }
-                            publicChatUL.append(new_message);
+                            privateChatUL.append(new_message);
                         }
                     }
                 }
@@ -236,18 +237,24 @@
                                 // )
                         }
 
-                        let confirmationCount = String(config.game.actions.confirmationCount);
-                        let votesNeeded = String(config.game.actions.votesNeeded);
-                        let countFraction = confirmationCount + '/' + votesNeeded;
-                        $('#actionBox')
-                            .empty()
-                            .append($('<h4>').text(config.game.actions.prompt))
-                            .append(action_choices)
-                            .append($('<input id="confirmationBox" class="btn btn-primary" type="button" value="Confirm">'))
-                            .append($('<input id="unconfirmationBox" class="btn btn-danger" type="button" value="Revoke">'))
-                            .append($('<p>').text('Confirmed: ' + countFraction))
-                            .append(action_teammates);
-                        
+                        if (config.game.actions.prompt != '') {
+                            let confirmationCount = String(config.game.actions.confirmationCount);
+                            let votesNeeded = String(config.game.actions.votesNeeded);
+                            let countFraction = confirmationCount + '/' + votesNeeded;
+                            $('#actionBox')
+                                .empty()
+                                .append($('<h4>').text(config.game.actions.prompt))
+                                .append(action_choices)
+                                .append($('<input id="confirmationBox" class="btn btn-primary" type="button" value="Confirm">'))
+                                .append($('<input id="unconfirmationBox" class="btn btn-danger" type="button" value="Revoke">'))
+                                .append($('<p>').text('Confirmed: ' + countFraction))
+                                .append(action_teammates);
+                        }
+                        else {
+                            $('#actionBox')
+                                .empty()
+                                .append($('<h4>').text('It is night in the town. The villagers rest.'))
+                        }
                     } 
                 }
                 // Room Info
@@ -540,18 +547,19 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade m-auto" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
+        </div>
+        <div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="staticBackdropLabel"></h5>
                     </div>
                     <div class="modal-body">
                         <form id="usernameSubmission">
-                            <input id="usernameInput" class="form-group w-100" type="text" placeholder="Username">
+                            <input id="usernameInput" class="form-group w-100" type="text" placeholder="Username" minlength="1" maxlength="24" autocomplete="off">
+                            <span id="joinErrorMsg" class="text-center text-danger"></span>
                             <input class="form-group btn btn-primary float-right" type="submit" value="Join">
                         </form>
-                    </div>
                     </div>
                 </div>
             </div>
