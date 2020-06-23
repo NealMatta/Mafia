@@ -196,9 +196,9 @@
                     }
                     else {
                         // Day/Night Styling
-                        config.game.gamePhase == 'Day'
-                            ? $('.game_body').removeClass('daytime').addClass('nighttime')
-                            : $('.game_body').removeClass('nighttime').addClass('daytime');
+                        config.game.phase == 'Day'
+                            ? $('.game_body').removeClass('nighttime').addClass('daytime')
+                            : $('.game_body').removeClass('daytime').addClass('nighttime');
 
                         let action_choices = $('<div class="card-columns" style="column-count: 3">');
                         for (var player in config.game.actions.choices) {

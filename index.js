@@ -395,6 +395,11 @@ gamesocket.on('connection', socket => {
 			// if still in pregame stage, remove player from room membership
 			if (rooms[roomToJoin].game == null) {
                 rooms[roomToJoin].removePlayer(socket.id, SESSION_ID);
+                for (var session_id in rooms[roomToJoin].socket_session_link) {
+                    gamesocket
+                        .to(rooms[roomToJoin].socket_session_link[session_id])
+                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false])); 
+                }
 			}
 			// if the game is ongoing and the disconnecting client was part of it, warn the room of this disconnect
 			else if (rooms[roomToJoin].game.players[SESSION_ID]) {
