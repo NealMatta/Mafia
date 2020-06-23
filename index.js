@@ -219,9 +219,6 @@ gamesocket.on('connection', socket => {
     
 
 	socket.on('join via link', (name, errorback) => {
-
-        console.log(SESSION_ID, socket.id)
-        console.log(rooms[roomToJoin].members)
         // errorback(error_message) is a callback func on the clientside that will display the error message
         // Make sure room still exists
         if (rooms[roomToJoin]) {
@@ -234,12 +231,18 @@ gamesocket.on('connection', socket => {
                     errorback('Please enter a valid username.')
                 }
                 else {
-                    console.log('adding')
+                    socket.join(roomToJoin);
                     rooms[roomToJoin].addPlayer(socket.id, SESSION_ID, name);
                     // Destroy the modal on the uesr's page
                     socket.emit('grant access', rooms[roomToJoin].code);
                     // Update user's page completely
                     socket.emit('room update', rooms[roomToJoin].clientPackage(SESSION_ID, [true, true, true, true, true, true]));
+                    // Refresh everybody in the room's player list
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
+                        gamesocket
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, true, false, false, false])); 
+                    }
                 }
             }
         }
@@ -296,14 +299,19 @@ gamesocket.on('connection', socket => {
 		if (rooms[roomToJoin].game != null) {
 			if (msg.length > 0) {
 				let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
-				let sender_name = rooms[roomToJoin].game.players[SESSION_ID].username;
 				// console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
 				if (sender_role != 'Villager') {
 					// everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
-					let message = rooms[roomToJoin].game.sendPrivateMessage(msg, sender_role, sender_name, 'Private');
-					gamesocket
-						.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
-						.emit('new private chat', message);
+					let message = rooms[roomToJoin].game.sendPrivateMessage(msg, sender_role, SESSION_ID, 'Private');
+                    // Eventually use socket rooms for role private message updates
+                    // gamesocket
+					// 	.in(roomToJoin + rooms[roomToJoin].game.roleRoomCodes[sender_role])
+                    //     .emit('new private chat', message);
+                    for (var session_id in rooms[roomToJoin].socket_session_link) {
+                        gamesocket
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, false, false, false])); 
+                    }
 				} else {
 					console.log(
 						'illegal private message attempt from villager ' + sender_name + ' in room ' + roomToJoin

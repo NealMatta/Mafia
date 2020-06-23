@@ -24,11 +24,11 @@ function noOneDiedMessage(live_players) {
     let choices = [
         'The night passes, taking no lives along with it.',
         'The night comes to an end, leaving behind no casualties.',
-        'A scream is heard. ' + live_players[randomNumBetween(0, len(live_players))] + ' saw a spider. Nobody died tonight.',
-        'Strange noises were reported coming from the bedroom of ' + live_players[randomNumBetween(0, len(live_players))] + ' last night. No lives were taken.',
+        'A scream is heard. ' + live_players[randomNumBetween(0, live_players.length-1)] + ' saw a spider. Nobody died tonight.',
+        'Strange noises were reported coming from the bedroom of ' + live_players[randomNumBetween(0, live_players.length-1)] + ' last night. No lives were taken.',
         'A peaceful night was had by all.'
     ];
-    return choices[randomNumBetween(0, choices.length)];
+    return choices[randomNumBetween(0, choices.length-1)];
 }
 
 function someoneDiedMessage(who_died) {
@@ -41,7 +41,7 @@ function someoneDiedMessage(who_died) {
         who_died + ' has been murdered.',
         'A peaceful night was had by all. Except ' + who_died + ', who died violently.'
     ];
-    return choices[randomNumBetween(0, choices.length)];
+    return choices[randomNumBetween(0, choices.length-1)];
 }
 
 function someoneExecutedMessage(who_died) {
@@ -53,7 +53,7 @@ function someoneExecutedMessage(who_died) {
         'Guillotine, meet ' + who_died,
         'An emergency town meeting resulted in the execution of ' + who_died
     ];
-    return choices[randomNumBetween(0, choices.length)];
+    return choices[randomNumBetween(0, choices.length-1)];
 }
 
 module.exports = {
