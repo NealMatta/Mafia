@@ -312,10 +312,12 @@ gamesocket.on('connection', socket => {
                             .to(rooms[roomToJoin].socket_session_link[session_id])
                             .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, false, false, false])); 
                     }
-				} else {
-					console.log(
-						'illegal private message attempt from villager ' + sender_name + ' in room ' + roomToJoin
-					);
+                }
+                else {
+                    // Nothing, because villagers can't send private messages. Eventually maybe let them use it as a journal or something.
+					// console.log(
+					// 	'illegal private message attempt from villager ' + SESSION_ID + ' in room ' + roomToJoin
+					// );
 				}
 			}
 		} else {

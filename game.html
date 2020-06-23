@@ -63,7 +63,7 @@
             socket.on('new chat', (message) => {
                 let new_message = $('<li class="list-group-item">').text(message.content);
                 if (message.type == 'Public') {
-                    new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
+                    new_message.addClass('text-light public_message'); // Could add custom css for color/bold/italic/whatever
                 }
                 else { //type == 'System'
                     new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
@@ -100,7 +100,7 @@
                         let message = config.chatHistory[m]
                         let new_message = $('<li class="list-group-item">').text(message.content);
                         if (message.type == 'Public') {
-                            new_message.addClass('text-dark public_message'); // Could add custom css for color/bold/italic/whatever
+                            new_message.addClass('text-light public_message'); // Could add custom css for color/bold/italic/whatever
                         }
                         else { //type == 'System'
                             new_message.addClass('text-secondary system_message'); // Could add custom css for color/bold/italic/whatever
@@ -154,7 +154,7 @@
                             config.game.players[u].isDead
                                 ? $('#playersContainer').append(
                                     $('<div class="card bg-dark">').append(
-                                        $('<div class="card-body p-2">').text(
+                                        $('<div class="card-body p-2 text-secondary">').text(
                                             config.game.players[u].username
                                         )
                                     )
