@@ -368,7 +368,7 @@ gamesocket.on('connection', socket => {
         if ((rooms[roomToJoin]) && (rooms[roomToJoin].game != null) && (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) && !(rooms[roomToJoin].game.players[SESSION_ID].isDead)) {
             // confirmation_status should be a Bool of whether or not the client is confirming or not
             // Confirm or unconfirm vote based on this bool
-            let result = confirmation_status ? rooms[roomToJoin].game.confirmVote(SESSION_ID) : rooms[roomToJoin].game.unconfirmVote(SESSION_ID);
+            let result = confirmation_status ? rooms[roomToJoin].confirmVote(SESSION_ID) : rooms[roomToJoin].unconfirmVote(SESSION_ID);
             if (result) {
                 // Voting is complete. Inform everyone of the results and update action boxes and private chats.
                 // result is a message to be sent to the public chat

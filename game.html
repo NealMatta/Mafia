@@ -191,13 +191,22 @@
                         // Day/Night Styling
                         $('.game_body').removeClass('daytime').removeClass('nighttime')
 
-                        //give host start-game options
+                        // Give host the ability to start a game
                         $('#actionBox').empty();
                         if (config.isHost) {
                             //actions = start game options
                             $('#actionBox').append(
                                 $('.hostActions').clone().removeClass('d-none')
                             );
+                        }
+
+                        // If a game has just ended, show everyone the results/roles
+                        if (config.lastGameResults) {
+                            for (var player in config.lastGameResults) {
+                                $('#actionBox').append(
+                                    $('<p>').text(player + ': ' + config.lastGameResults[player])
+                                );
+                            }
                         }
                     }
                     else {

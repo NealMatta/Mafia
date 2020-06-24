@@ -10,7 +10,8 @@ class Room {
 		this.name = name; //custom room name
 		this.isPublic = isPublic; //whether this room should be advertised on homepage
 		this.gameOngoing = false; //this might end up being unnecessary, instead perhaps just checking if game==null
-		this.game = null; //null until a game starts. needs to be initialized here so clientPackage() doesn't fail.
+        this.game = null; //null until a game starts. needs to be initialized here so clientPackage() doesn't fail.
+        this.lastGameKey = null; //everyone's role from the last game. to show in postgame lobby.
 		this.members = {}; //contains players (sessionID:Player), populated when people set a username, passed to game upon game start.
 		//after game start, could include spectators?
 		this.socket_session_link = {}; //contains (sessionID:socketID), so clientpackages can be distributed to relevant sockets and clients can be tracked through refreshes
@@ -38,7 +39,25 @@ class Room {
 			to_return.push(this.members[sid].username);
 		}
 		return to_return;
-	}
+    }
+
+    confirmVote(sessionID) {
+        // Pipe vote confirmations through here so we can check for game over and intercept
+        let result = this.game.confirmVote(sessionID);
+        
+        // Check for game over
+        if (result && result[0] == 'GAME OVER') {
+            this.game = null; // End the game
+            this.lastGameKey = result[2];
+            return result[1];
+        }
+
+        // If the game's not over just pass back result
+        else {
+            return result;
+        }
+    }
+
 	//a singular object to send the client, containing pertinent info and nothing the client shouldn't have access to
 	clientPackage(sessionID, reconstruction_parameters) {
         // reconstruction_parameters is a boolean vector detailing which parts of the client DOM should be reconstructed
@@ -53,7 +72,8 @@ class Room {
 			users_present: this.getMemberList(),
 			gameHasBegun: this.gameOngoing, //this might end up being unnecessary, instead perhaps just checking if game==null
 			game: this.game != null ? this.game.clientPackage(sessionID) : null,
-			isHost: sessionID == this.host, //on client side, if this is true, it will give them options for starting the game
+            isHost: sessionID == this.host, //on client side, if this is true, it will give them options for starting the game
+            lastGameResults: this.lastGameKey ? this.lastGameKey : null
 		};
 	}
 }

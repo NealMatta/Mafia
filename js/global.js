@@ -24,8 +24,8 @@ function noOneDiedMessage(live_players) {
     let choices = [
         'The night passes, taking no lives along with it.',
         'The night comes to an end, leaving behind no casualties.',
-        'A scream is heard. ' + live_players[randomNumBetween(0, live_players.length-1)] + ' saw a spider. Nobody died tonight.',
-        'Strange noises were reported coming from the bedroom of ' + live_players[randomNumBetween(0, live_players.length-1)] + ' last night. No lives were taken.',
+        'A scream is heard. ' + live_players[randomNumBetween(0, live_players.length-1)].username + ' saw a spider. Nobody died tonight.',
+        'Strange noises were reported coming from the bedroom of ' + live_players[randomNumBetween(0, live_players.length-1)].username + ' last night. No lives were taken.',
         'A peaceful night was had by all.'
     ];
     return choices[randomNumBetween(0, choices.length-1)];
@@ -53,7 +53,7 @@ function noOneExecutedMessage(live_players) {
         'A peaceful day was had by all.',
         'The townspeople came together and decided not to prosecute anybody',
         'A democratic decision was made to defer justice to tomorrow. Nobody was sentenced to death.',
-        live_players[randomNumBetween(0, live_players.length-1)] + ' went for a swim. ' + live_players[randomNumBetween(0, live_players.length-1)] + ' frolicked in the park. Nobody died today.'
+        live_players[randomNumBetween(0, live_players.length-1)].username + ' went for a swim. ' + live_players[randomNumBetween(0, live_players.length-1)].username + ' frolicked in the park. Nobody died today.'
     ];
     return choices[randomNumBetween(0, choices.length-1)];
 }
@@ -71,6 +71,17 @@ function someoneExecutedMessage(who_died) {
 }
 
 const ABSTAIN = 'No Execution Today';
+
+// const ROLES = {
+//     MAFIA: 'Mafia',
+//     SHERIFF: 'Sheriff',
+//     DOCTOR: 'Doctor',
+//     VILLAGER: 'Villager',
+//     SPECTATOR: 'Spectator',
+//     WINNER: 'Winner',
+//     LOSER: 'Loser',
+//     DRAWN: 'Drawn'
+// }
 
 module.exports = {
 	currentTime,
