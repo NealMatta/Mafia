@@ -39,6 +39,11 @@ app.get('/', (req, res) => {
 	res.sendFile(__dirname + '/index.html');
 });
 
+// If someone for some reason tries to access some weird path
+app.get('/*/*', (req,res) => {
+    res.redirect('/404');
+})
+
 // Entering a game room
 app.get('/game*', (req, res) => {
 	// note: in this context, req.session refers to same object as socket.request.session in socket context. unsure if by value or reference
@@ -49,11 +54,6 @@ app.get('/game*', (req, res) => {
 		res.sendFile(__dirname + '/404.html');
 	}
 });
-
-app.get('/*/*', (req,res) => {
-    // If someone for some reason tries to access some weird path
-    res.redirect('/404');
-})
 
 app.use(function (req, res, next) {
     res.status(404).sendFile(__dirname + '/404.html');
