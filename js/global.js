@@ -87,6 +87,23 @@ const PHASE = {
     NIGHT: 'Night'
 }
 
+// A list of prohibited usernames. This could end up including profanity or whatever, but mainly it's to avoid confusion.
+// For example, a username like "abstain" would be confusing during a vote on who to kill.
+const FORBIDDEN_USERNAMES = [
+    '',
+    'ABSTAIN',
+    'ABSTAIN!',
+    'ABSTAIN.',
+    'NO VOTE',
+    'NONE OF THE ABOVE',
+    'NEITHER',
+    'NO ONE',
+    'NOBODY',
+    'DON\'T KILL ANYBODY TODAY',
+    'NO HANGINGS TODAY',
+    'NO EXECUTION TODAY'
+];
+
 module.exports = {
 	currentTime,
 	randomNumBetween,
@@ -98,5 +115,6 @@ module.exports = {
     ABSTAIN,
     GAMEOVER,
     ROLE,
-    PHASE
+    PHASE,
+    FORBIDDEN_USERNAMES
 };

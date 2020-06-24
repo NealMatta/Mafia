@@ -17,23 +17,6 @@ const port = 69; // port for hosting site on local system. will probably be inva
 var rooms = {}; // Contains all active rooms as roomid:Room
 var public_rooms = {}; // Contains all public, unstarted rooms as roomname:roomid
 
-// A list of prohibited usernames. This could end up including profanity or whatever, but mainly it's to avoid confusion.
-// For example, a username like "abstain" would be confusing during a vote on who to kill.
-const FORBIDDEN_USERNAMES = [
-    '',
-    'ABSTAIN',
-    'ABSTAIN!',
-    'ABSTAIN.',
-    'NO VOTE',
-    'NONE OF THE ABOVE',
-    'NEITHER',
-    'NO ONE',
-    'NOBODY',
-    'DON\'T KILL ANYBODY TODAY',
-    'NO HANGINGS TODAY',
-    'NO EXECUTION TODAY'
-];
-
 // ==========================
 // ===== EXPRESS EVENTS =====
 // ==========================
@@ -101,7 +84,7 @@ homesocket.on('connection', socket => {
 			errorback('Room names must be 1-32 characters.');
 		} else if (Object.keys(public_rooms).includes(roomName)) {
 			errorback('Room with this name already exists.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+		} else if (g.FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
             errorback('Please enter a valid username.')
         } else {
 			//name and username valid; make the room.
@@ -130,7 +113,7 @@ homesocket.on('connection', socket => {
 			errorback('Error joining session. Please refresh and try again.');
 		} else if (rooms[public_rooms[roomName]].getMemberList().includes(username)) {
 			errorback('That username is already in use in this lobby.');
-		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+		} else if (g.FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
             errorback('Please enter a valid username.')
         } else {
 			//name and session are valid; join the room
@@ -147,7 +130,7 @@ homesocket.on('connection', socket => {
 			roomCode = 'game' + input.toUpperCase();
 		} else if (input.length == 8) {
 			roomCode = input.toUpperCase();
-		} else if (FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
+		} else if (g.FORBIDDEN_USERNAMES.includes(username.trim().toUpperCase())) {
             errorback('Please enter a valid username.')
         } else {
 			errorback('Invalid room code.');
@@ -240,7 +223,7 @@ gamesocket.on('connection', socket => {
                 if (rooms[roomToJoin].getMemberList().includes(name)) {
                     errorback('That name is already in use in this game');
                 }
-                else if (FORBIDDEN_USERNAMES.includes(name.trim().toUpperCase())) {
+                else if (g.FORBIDDEN_USERNAMES.includes(name.trim().toUpperCase())) {
                     errorback('Please enter a valid username.')
                 }
                 else {
