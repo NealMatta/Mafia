@@ -11,8 +11,8 @@ const g = require('./js/global')
 // const Ballot = require('./js/ballot');
 
 const { info } = require('console');
-const url = 'localhost:69/'; //big dreams of a .com one day
-const port = 69; // port for hosting site on local system. will probably be invalidated once hosted elsewhere.
+// const url = 'localhost:69/'; //big dreams of a .com one day
+const port = process.env.PORT || 69; // port for hosting site on local system. will probably be invalidated once hosted elsewhere.
 
 var rooms = {}; // Contains all active rooms as roomid:Room
 var public_rooms = {}; // Contains all public, unstarted rooms as roomname:roomid
@@ -96,7 +96,7 @@ homesocket.on('connection', socket => {
 			room = new Room(roomName, isPublic, socket.request.session.id);
 			console.log('new room created with code ' + room.code);
 			room.chatHistory.push(new Message(username + ' created the room.'));
-			room.chatHistory.push(new Message('Invite Link: ' + url + room.code));
+			room.chatHistory.push(new Message('Invite Code: ' + room.code));
 			rooms[room.code] = room; // Add room to catalog of all rooms
 
 			if (isPublic) {
