@@ -7,6 +7,7 @@ var session = require('express-session');
 const Room = require('./js/room');
 const Message = require('./js/message');
 const Game = require('./js/game');
+const g = require('./js/global')
 // const Ballot = require('./js/ballot');
 
 const { info } = require('console');
@@ -200,7 +201,7 @@ gamesocket.on('connection', socket => {
 			if (Object.keys(rooms[roomToJoin].game.players).includes(SESSION_ID)) {
 				rooms[roomToJoin].updateSocketLink(socket.id, SESSION_ID);
 				// Put the user in a socket room for their particular role in the game (except villagers, who don't have private chat)
-				if (rooms[roomToJoin].game.players[SESSION_ID].role != 'Villager') {
+				if (rooms[roomToJoin].game.players[SESSION_ID].role != g.ROLE.VILLAGER) {
 					socket.join(
 						roomToJoin +
 							rooms[roomToJoin].game.roleRoomCodes[rooms[roomToJoin].game.players[SESSION_ID].role]
@@ -312,7 +313,7 @@ gamesocket.on('connection', socket => {
 			if (msg.length > 0) {
 				let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
 				// console.log('private message to all' + sender_role + ' in room ' + roomToJoin + ':' + msg); //print the chat message event
-				if (sender_role != 'Villager') {
+				if (sender_role != g.ROLE.VILLAGER) {
 					// everyone except villagers can send chats to everyone of their own role. even spectators can talk to each other privately.
 					let message = rooms[roomToJoin].game.sendPrivateMessage(msg, sender_role, SESSION_ID, 'Private');
                     // Eventually use socket rooms for role private message updates
@@ -343,7 +344,7 @@ gamesocket.on('connection', socket => {
             rooms[roomToJoin].game.vote(SESSION_ID, vote);
             // Update the action box for everyone voting in the same ballot as the player
             // Which is, if it's daytime, everyone, or if it's night, only those with same role
-            if (rooms[roomToJoin].game.gamePhase == 'Day') {
+            if (rooms[roomToJoin].game.gamePhase == g.PHASE.DAY) {
                 for (var session_id in rooms[roomToJoin].socket_session_link) {
                     gamesocket
                         .to(rooms[roomToJoin].socket_session_link[session_id])
@@ -382,11 +383,11 @@ gamesocket.on('connection', socket => {
             }
             else {
                 // Refresh everyone's action boxes with this role and update private chat in case of notification of selection
-                if (rooms[roomToJoin].game.gamePhase == 'Day') {
+                if (rooms[roomToJoin].game.gamePhase == g.PHASE.DAY) {
                     for (var session_id in rooms[roomToJoin].socket_session_link) {
                         gamesocket
                             .to(rooms[roomToJoin].socket_session_link[session_id])
-                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, false, false, true, false, false])); 
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
                     }
                 }
                 else {

@@ -72,16 +72,20 @@ function someoneExecutedMessage(who_died) {
 
 const ABSTAIN = 'No Execution Today';
 
-// const ROLES = {
-//     MAFIA: 'Mafia',
-//     SHERIFF: 'Sheriff',
-//     DOCTOR: 'Doctor',
-//     VILLAGER: 'Villager',
-//     SPECTATOR: 'Spectator',
-//     WINNER: 'Winner',
-//     LOSER: 'Loser',
-//     DRAWN: 'Drawn'
-// }
+const GAMEOVER = 'Game Over!'
+
+const ROLE = {
+    MAFIA: 'Mafia',
+    SHERIFF: 'Sheriff',
+    DOCTOR: 'Doctor',
+    VILLAGER: 'Villager',
+    SPECTATOR: 'Spectator',
+}
+
+const PHASE = {
+    DAY: 'Day',
+    NIGHT: 'Night'
+}
 
 module.exports = {
 	currentTime,
@@ -91,5 +95,8 @@ module.exports = {
     someoneDiedMessage,
     someoneExecutedMessage,
     noOneExecutedMessage,
-    ABSTAIN
+    ABSTAIN,
+    GAMEOVER,
+    ROLE,
+    PHASE
 };

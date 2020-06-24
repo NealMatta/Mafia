@@ -1,4 +1,5 @@
 const Message = require('./message');
+const g = require('./global');
 
 class Player {
 	constructor(username) {
@@ -12,7 +13,7 @@ class Player {
 	}
 	kill() {
 		this.isDead = true;
-		this.role = 'Spectator';
+		this.role = g.ROLE.SPECTATOR;
 		this.privateLog.push(new Message('You have been killed.'));
     }
     wentOffline() {

@@ -115,7 +115,7 @@ class Ballot {
         // If not then return the session ID of the chosen
         let idOfSelection = Object.keys(this.players).filter(sid => this.players[sid].username == usernameOfSelection[0]);
         console.log('Closing ballot and returning result: ', idOfSelection[0]); //should be a session ID
-        return idOfSelection[0];
+        return idOfSelection[0]; 
     }
 }
 

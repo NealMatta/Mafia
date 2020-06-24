@@ -16,7 +16,7 @@ class Game {
         }
         this.ballots = {}; //collection of active Ballot objects
         this.active_ballot_results = {Mafia: false, Sheriff: false, Doctor: false}; //status of ballots
-		this.gamePhase = 'Night';
+		this.gamePhase = g.PHASE.NIGHT;
 		this.advance(); // Move forward from night to day and instantiate the first ballot
 		this.roleRoomCodes = {
 			Mafia: g.generateRoomCode(),
@@ -27,10 +27,10 @@ class Game {
 	}
 	assignRoles() {
 		this.numVillagers = Object.keys(this.players).length - this.numSheriff - this.numDoctors - this.numMafia;
-		let part1 = Array(this.numSheriff).fill('Sheriff');
-		let part2 = Array(this.numDoctors).fill('Doctor');
-		let part3 = Array(this.numMafia).fill('Mafia');
-		let part4 = Array(this.numVillagers).fill('Villager');
+		let part1 = Array(this.numSheriff).fill(g.ROLE.SHERIFF);
+		let part2 = Array(this.numDoctors).fill(g.ROLE.DOCTOR);
+		let part3 = Array(this.numMafia).fill(g.ROLE.MAFIA);
+		let part4 = Array(this.numVillagers).fill(g.ROLE.VILLAGER);
 		let roleLabels = part1.concat(part2, part3, part4);
 		// e.g. [sherriff, doctor, mafia, villager, villager]
 		let playerSessionIDs = Object.keys(this.players); //list of session IDs
@@ -77,36 +77,35 @@ class Game {
         this.active_ballot_results = {};
 
         // Check for win conditions
-        let num_remaining_mafia = this.getPlayersWithRole('Mafia').length;
-        let num_remaining_doctor = this.getPlayersWithRole('Doctor').length;
-        let num_remaining_sheriff = this.getPlayersWithRole('Sheriff').length;
+        let num_remaining_mafia = this.getPlayersWithRole(g.ROLE.MAFIA).length;
+        let num_remaining_doctor = this.getPlayersWithRole(g.ROLE.DOCTOR).length;
+        let num_remaining_sheriff = this.getPlayersWithRole(g.ROLE.SHERIFF).length;
         
         // Track only the role ballots with remaining players
         if (num_remaining_mafia > 0) {
-            this.active_ballot_results['Mafia'] = false;
+            this.active_ballot_results[g.ROLE.MAFIA] = false;
         }
         if (num_remaining_doctor > 0) {
-            this.active_ballot_results['Doctor'] = false;
+            this.active_ballot_results[g.ROLE.DOCTOR] = false;
         }
-        if (num_remaining_sheriff.length > 0) {
-            this.active_ballot_results['Sheriff'] = false;
+        if (num_remaining_sheriff > 0) {
+            this.active_ballot_results[g.ROLE.SHERIFF] = false;
         }
 
         // Generate Clean Ballots
 		this.ballots = {
-			Mafia: new Ballot(this.players, 'Mafia'),
-			Sheriff: new Ballot(this.players, 'Sheriff'),
-			Doctor: new Ballot(this.players, 'Doctor'),
+			Mafia: new Ballot(this.players, g.ROLE.MAFIA),
+			Sheriff: new Ballot(this.players, g.ROLE.SHERIFF),
+			Doctor: new Ballot(this.players, g.ROLE.DOCTOR),
 			Village: new Ballot(this.players, 'Village'),
 		};
 		// Move on to the next game phase
-		this.gamePhase == 'Day' ? (this.gamePhase = 'Night') : (this.gamePhase = 'Day');
+		this.gamePhase == g.PHASE.DAY ? (this.gamePhase = g.PHASE.NIGHT) : (this.gamePhase = g.PHASE.DAY);
 	}
 	actions(role) {
 		//contents of the action box for each type of player
-		if (this.gamePhase == 'Day') {
+		if (this.gamePhase == g.PHASE.DAY) {
 			return {
-                active: true,
 				prompt: 'It is daytime in the town. Select who to execute',
 				choices: this.ballots['Village'].getChoices(),
 				teammates: this.ballots['Village'].getTeammates(),
@@ -116,40 +115,36 @@ class Game {
 		} else {
 			// It's Night
 			switch (role) {
-				case 'Mafia':
+				case g.ROLE.MAFIA:
 					return {
-                        active: true,
 						prompt: 'Select who to kill',
-						choices: this.ballots['Mafia'].getChoices(),
-						teammates: this.ballots['Mafia'].getTeammates(),
-						confirmationCount: this.ballots['Mafia'].numConfirmed(),
-						votesNeeded: this.ballots['Mafia'].numVotesRequired(),
+						choices: this.ballots[g.ROLE.MAFIA].getChoices(),
+						teammates: this.ballots[g.ROLE.MAFIA].getTeammates(),
+						confirmationCount: this.ballots[g.ROLE.MAFIA].numConfirmed(),
+						votesNeeded: this.ballots[g.ROLE.MAFIA].numVotesRequired(),
 					};
 					break;
-				case 'Doctor':
+				case g.ROLE.DOCTOR:
 					return {
-                        active: true,
 						prompt: 'Select who to save',
-						choices: this.ballots['Doctor'].getChoices(),
-						teammates: this.ballots['Doctor'].getTeammates(),
-						confirmationCount: this.ballots['Doctor'].numConfirmed(),
-						votesNeeded: this.ballots['Doctor'].numVotesRequired(),
+						choices: this.ballots[g.ROLE.DOCTOR].getChoices(),
+						teammates: this.ballots[g.ROLE.DOCTOR].getTeammates(),
+						confirmationCount: this.ballots[g.ROLE.DOCTOR].numConfirmed(),
+						votesNeeded: this.ballots[g.ROLE.DOCTOR].numVotesRequired(),
 					};
 					break;
-				case 'Sheriff':
+				case g.ROLE.SHERIFF:
 					return {
-                        active: true,
 						prompt: 'Select who to investigate',
-						choices: this.ballots['Sheriff'].getChoices(),
-						teammates: this.ballots['Sheriff'].getTeammates(),
-						confirmationCount: this.ballots['Sheriff'].numConfirmed(),
-						votesNeeded: this.ballots['Sheriff'].numVotesRequired(),
+						choices: this.ballots[g.ROLE.SHERIFF].getChoices(),
+						teammates: this.ballots[g.ROLE.SHERIFF].getTeammates(),
+						confirmationCount: this.ballots[g.ROLE.SHERIFF].numConfirmed(),
+						votesNeeded: this.ballots[g.ROLE.SHERIFF].numVotesRequired(),
 					};
                     break;
 				default:
 					//villagers
 					return {
-                        active: false,
 						prompt: 'It is night in the town. The villagers rest.',
 						choices: [],
 						teammates: [],
@@ -174,7 +169,7 @@ class Game {
 	}
 	vote(sessionID, vote) {
 		let voter_role = this.players[sessionID].role;
-		if (this.gamePhase == 'Day') {
+		if (this.gamePhase == g.PHASE.DAY) {
 			this.ballots['Village'].castVote(vote);
 		} else {
 			// It's Night. Cast vote in the appropriate ballot
@@ -184,7 +179,7 @@ class Game {
 	unconfirmVote(sessionID) {
 		// Handling if a voter unchecks their box
 		let voter_role = this.players[sessionID].role;
-		if (this.gamePhase == 'Day') {
+		if (this.gamePhase == g.PHASE.DAY) {
 			this.ballots['Village'].unconfirmVote(this.players[sessionID].username);
 		} else {
 			// It's Night. Confirm vote in the appropriate ballot
@@ -195,7 +190,7 @@ class Game {
 	confirmVote(sessionID) {
 		// Handling if a voter checks their box
 		let voter_role = this.players[sessionID].role;
-		if (this.gamePhase == 'Day') {
+		if (this.gamePhase == g.PHASE.DAY) {
 			let vote_result = this.ballots['Village'].confirmVote(this.players[sessionID].username); // Either session id of victim or false
             if (vote_result == g.ABSTAIN) {
                 // Move the game forward
@@ -206,7 +201,6 @@ class Game {
             else if (vote_result) {
                 // Group has decided to execute a player. Carry it out
                 this.players[vote_result].kill();
-                this.players[vote_result].privateLog.push(new Message('You have been executed'));
                 // See if the game is over
                 if (this.checkIfGameOver()) { return this.checkIfGameOver() };
                 // Move the game forward
@@ -222,25 +216,27 @@ class Game {
                 // Also store this information somewhere in Game so that upon game.advance() we can kill killed players and save saved players etc
                 this.active_ballot_results[voter_role] = vote_result;
                 this.sendPrivateMessage(this.players[vote_result].username + ' was chosen.', voter_role);
+                console.log('ballot as it stands:', Object.values(this.active_ballot_results));
+                console.log(Object.values(this.active_ballot_results).includes(false));
                 if (!(Object.values(this.active_ballot_results).includes(false))) {
                     // All nightly ballots have closed. Calculate results.
-                    let mafia_result = this.active_ballot_results['Mafia'];
-                    let sheriff_result = this.active_ballot_results['Sheriff'];
-                    let doctor_result = this.active_ballot_results['Doctor'];
+                    let mafia_result = this.active_ballot_results[g.ROLE.MAFIA];
+                    let sheriff_result = this.active_ballot_results[g.ROLE.SHERIFF];
+                    let doctor_result = this.active_ballot_results[g.ROLE.DOCTOR];
                     // Inform sheriff about who they investigated. Right now, this is the role. Possibly this should only be mafia or not
-                    this.sendPrivateMessage('Your investigation finds that ' + this.players[sheriff_result].username + '\'s role is: ' + this.players[sheriff_result].role, 'Sheriff');
+                    this.sendPrivateMessage('Your investigation finds that ' + this.players[sheriff_result].username + '\'s role is: ' + this.players[sheriff_result].role, g.ROLE.SHERIFF);
                     // Carry out result of mafia-doctor stuff
                     if (mafia_result == doctor_result) {
                         // No one dies
-                        this.sendPrivateMessage('You are surprised to hear that ' + this.players[mafia_result].username + ' survived.', 'Mafia');
-                        this.sendPrivateMessage('Thanks to you, a life was saved last night.', 'Doctor');
+                        this.sendPrivateMessage('You are surprised to hear that ' + this.players[mafia_result].username + ' survived.', g.ROLE.MAFIA);
+                        this.sendPrivateMessage('Thanks to you, a life was saved last night.', g.ROLE.DOCTOR);
                         // Move the game forward
                         this.advance();
                         return g.noOneDiedMessage(this.getPlayerList('Alive'));
                     }
                     else {
                         this.players[mafia_result].kill();
-                        this.sendPrivateMessage('You pretend to be shocked at the news about ' + this.players[mafia_result].username + '.', 'Mafia');
+                        this.sendPrivateMessage('You pretend to be shocked at the news about ' + this.players[mafia_result].username + '.', g.ROLE.MAFIA);
                         // See if the game is over
                         if (this.checkIfGameOver()) { return this.checkIfGameOver() };
                         // Move the game forward
@@ -260,22 +256,22 @@ class Game {
     }
     checkIfGameOver() {
         // Check for win conditions
-        let num_remaining_mafia = this.getPlayersWithRole('Mafia').length;
-        let num_remaining_doctor = this.getPlayersWithRole('Doctor').length;
-        let num_remaining_sheriff = this.getPlayersWithRole('Sheriff').length;
+        let num_remaining_mafia = this.getPlayersWithRole(g.ROLE.MAFIA).length;
+        let num_remaining_doctor = this.getPlayersWithRole(g.ROLE.DOCTOR).length;
+        let num_remaining_sheriff = this.getPlayersWithRole(g.ROLE.SHERIFF).length;
         let num_remaining_players = this.getPlayerList('Alive').length;
 
         if (num_remaining_mafia >= num_remaining_players/2) {
             // Mafia wins
-            return ['GAME OVER', 'The town has been terrorized. The mafia wins!' , this.playerkey]
+            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!' , this.playerkey]
         }
         if (num_remaining_mafia == 0) {
             // Town wins
-            return ['GAME OVER', 'The town wins! The mafia has been eradicated.' , this.playerkey]
+            return [g.GAMEOVER, 'The town wins! The mafia has been eradicated.' , this.playerkey]
         }
         if (num_remaining_mafia == 1 && num_remaining_doctor == 1 && num_remaining_players == 2) {
             // This is the only possible draw that I can think of
-            return ['GAME OVER', 'The game is a draw!' , this.playerkey]
+            return [g.GAMEOVER, 'The game is a draw!' , this.playerkey]
         }
     }
 	clientPackage(sessionID) {
@@ -285,7 +281,7 @@ class Game {
 			phase: this.gamePhase,
 			actions: this.actions(this.players[sessionID].role),
 			teammates:
-				this.players[sessionID].role == 'Villager'// || this.players[sessionID].role == 'Spectator'
+				this.players[sessionID].role == g.ROLE.VILLAGER// || this.players[sessionID].role == g.ROLE.SPECTATOR
 					? []
 					: this.getPlayersWithRole(this.players[sessionID].role),
 		};

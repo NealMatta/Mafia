@@ -46,7 +46,7 @@ class Room {
         let result = this.game.confirmVote(sessionID);
         
         // Check for game over
-        if (result && result[0] == 'GAME OVER') {
+        if (result && result[0] == g.GAMEOVER) {
             this.game = null; // End the game
             this.lastGameKey = result[2];
             return result[1];
