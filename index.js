@@ -46,13 +46,18 @@ app.get('/game*', (req, res) => {
 		console.log('user accessing game page via: ' + req.path);
 		res.sendFile(__dirname + '/game.html');
 	} else {
-		res.send(
-			'<h1>Sorry, that is an invalid game session.</h1><h2><a href="http://' +
-				url +
-				'">Return to homepage</a></h2>'
-		);
+		res.sendFile(__dirname + '/404.html');
 	}
 });
+
+app.get('/*/*', (req,res) => {
+    // If someone for some reason tries to access some weird path
+    res.redirect('/404');
+})
+
+app.use(function (req, res, next) {
+    res.status(404).sendFile(__dirname + '/404.html');
+})
 
 // =========================
 // ===== SOCKET EVENTS =====
