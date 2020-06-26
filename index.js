@@ -263,12 +263,7 @@ gamesocket.on('connection', socket => {
         }
         else {
             //create new game
-			rooms[roomToJoin].game = new Game(
-				rooms[roomToJoin].members,
-				options.sheriffs,
-                options.doctors,
-                options.mafia
-			);
+            rooms[roomToJoin].startGame(options.sheriffs, options.doctors, options.mafia);
 			rooms[roomToJoin].chatHistory.push(new Message('New Game Started'));
 			//start game for everyone by pushing them an update
 			//at present, people who haven't set their names will not receive anything from here on out. eventually, spectatorship should be added.
@@ -285,10 +280,17 @@ gamesocket.on('connection', socket => {
 		//also ensure that message is not blank
 		if (rooms[roomToJoin].members[SESSION_ID]) {
 			if (text.length > 0) {
-				let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username);
-				rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
-				console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
-				gamesocket.in(roomToJoin).emit('new chat', message); //send message to everyone in room
+                if (rooms[roomToJoin].game && rooms[roomToJoin].game.players[SESSION_ID].role == g.ROLE.SPECTATOR) {
+                    // Spectators shouldn't be able to talk publically during a game
+                    console.log('illegal public message attempt from ' + socket.id + ' in room ' + roomToJoin);
+                }
+                else {
+                    // Everything legal; send the message
+                    let message = new Message(text, 'Public', rooms[roomToJoin].members[SESSION_ID].username);
+                    rooms[roomToJoin].chatHistory.push(message); //add the message to the room's chat history
+                    console.log('message in room ' + roomToJoin + ':' + text); //print the chat message event
+                    gamesocket.in(roomToJoin).emit('new chat', message); //send message to everyone in room
+                }
 			}
 		} else {
 			console.log('illegal public message attempt from ' + socket.id + ' in room ' + roomToJoin);
