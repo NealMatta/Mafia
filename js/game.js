@@ -10,7 +10,7 @@ class Game {
 		this.numDoctors = numDoctors;
 		this.numMafia = numMafia;
 		this.assignRoles();
-        this.playerkey = {}; //holds original roles, for distribution in postgame, in format {username:role}
+        this.playerkey = {'GAME OVER': ''}; //holds original roles, for distribution in postgame, in format {username:role}
         for (var sid in players) {
             this.playerkey[players[sid].username] = players[sid].role;
         }
@@ -223,8 +223,10 @@ class Game {
                     let mafia_result = this.active_ballot_results[g.ROLE.MAFIA];
                     let sheriff_result = this.active_ballot_results[g.ROLE.SHERIFF];
                     let doctor_result = this.active_ballot_results[g.ROLE.DOCTOR];
-                    // Inform sheriff about who they investigated. Right now, this is the role. Possibly this should only be mafia or not
-                    this.sendPrivateMessage('Your investigation finds that ' + this.players[sheriff_result].username + '\'s role is: ' + this.players[sheriff_result].role, g.ROLE.SHERIFF);
+                    if (sheriff_result) {
+                        // Inform sheriff about who they investigated. Right now, this is the role. Possibly this should only be mafia or not
+                        this.sendPrivateMessage('Your investigation finds that ' + this.players[sheriff_result].username + '\'s role is: ' + this.players[sheriff_result].role, g.ROLE.SHERIFF);
+                    }
                     // Carry out result of mafia-doctor stuff
                     if (mafia_result == doctor_result) {
                         // No one dies
@@ -261,16 +263,24 @@ class Game {
         let num_remaining_sheriff = this.getPlayersWithRole(g.ROLE.SHERIFF).length;
         let num_remaining_players = this.getPlayerList('Alive').length;
 
-        if (num_remaining_mafia >= num_remaining_players/2) {
+        if (num_remaining_mafia > num_remaining_players/2) {
             // Mafia wins
+            this.playerkey['GAME OVER'] = 'The town has been terrorized. The mafia wins!';
+            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!' , this.playerkey]
+        }
+        if (num_remaining_mafia == num_remaining_players/2 && num_remaining_doctor == 0) {
+            // Mafia wins
+            this.playerkey['GAME OVER'] = 'The town has been terrorized. The mafia wins!';
             return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!' , this.playerkey]
         }
         if (num_remaining_mafia == 0) {
             // Town wins
+            this.playerkey['GAME OVER'] = 'The town wins! The mafia has been eradicated.';
             return [g.GAMEOVER, 'The town wins! The mafia has been eradicated.' , this.playerkey]
         }
         if (num_remaining_mafia == 1 && num_remaining_doctor == 1 && num_remaining_players == 2) {
             // This is the only possible draw that I can think of
+            this.playerkey['GAME OVER'] = 'The game is a draw!';
             return [g.GAMEOVER, 'The game is a draw!' , this.playerkey]
         }
     }
