@@ -8,9 +8,6 @@ class Player {
 		this.privateLog = []; //a complete log private to this player. can contain things like... "You investigated Alice -- she is a Villager" or "You and 2 other mafia killed Bob"
 		//contains Message objects of type 'Public' and 'System'
 	}
-	getUser() {
-		return this.username;
-	}
 	kill() {
 		this.isDead = true;
 		this.role = g.ROLE.SPECTATOR;

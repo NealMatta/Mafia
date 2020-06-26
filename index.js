@@ -343,10 +343,10 @@ gamesocket.on('connection', socket => {
                 // If Nighttime
                 let sender_role = rooms[roomToJoin].game.players[SESSION_ID].role;
                 for (var session_id in rooms[roomToJoin].socket_session_link) {
-                    if (rooms[roomToJoin].members[session_id].role == sender_role) {
+                    if (rooms[roomToJoin].game.players[session_id].role == sender_role) {
                         gamesocket
-                        .to(rooms[roomToJoin].socket_session_link[session_id])
-                        .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
+                            .to(rooms[roomToJoin].socket_session_link[session_id])
+                            .emit('room update', rooms[roomToJoin].clientPackage(session_id, [false, true, false, true, false, false])); 
                     }
                 }
             }

@@ -1,18 +1,23 @@
 const Message = require('./message');
 const Ballot = require('./ballot');
 const g = require('./global');
+const Player = require('./player');
 
 class Game {
 	constructor(players, numSheriff, numDoctors, numMafia) {
-		// Check for irregularities. Ex. numRoles can't be greater than # of players
-		this.players = players; //object with name:value pairs sessionID:Player
+        // Check for irregularities. Ex. numRoles can't be greater than # of players
+        this.players = {}; //object with name:value pairs sessionID:Player
+        // Populate the players object with clones of the original player objects, so that in-game players are tracked separately from room members.
+        for (var p in players) {
+            this.players[p] = new Player(players[p].username);
+        }
 		this.numSheriff = numSheriff;
 		this.numDoctors = numDoctors;
 		this.numMafia = numMafia;
 		this.assignRoles();
         this.playerkey = {'GAME OVER': ''}; //holds original roles, for distribution in postgame, in format {username:role}
         for (var sid in players) {
-            this.playerkey[players[sid].username] = players[sid].role;
+            this.playerkey[this.players[sid].username] = this.players[sid].role;
         }
         this.ballots = {}; //collection of active Ballot objects
         this.active_ballot_results = {Mafia: false, Sheriff: false, Doctor: false}; //status of ballots
