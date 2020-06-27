@@ -200,14 +200,15 @@ class Game {
                 return g.noOneExecutedMessage(this.getPlayerList('Alive'));
             }
             else if (vote_result) {
+                let result_msg = g.someoneExecutedMessage(this.players[vote_result].username);
                 // Group has decided to execute a player. Carry it out
                 this.players[vote_result].kill();
                 // See if the game is over
-                if (this.checkIfGameOver()) { return this.checkIfGameOver() };
+                if (this.checkIfGameOver(result_msg)) { return this.checkIfGameOver(result_msg) };
                 // Move the game forward
                 this.advance();
                 // Return a message for the public log
-                return g.someoneExecutedMessage(this.players[vote_result].username);
+                return result_msg;
 			}
         }
         else {
@@ -238,13 +239,14 @@ class Game {
                         return g.noOneDiedMessage(this.getPlayerList('Alive'));
                     }
                     else {
+                        let result_msg = g.someoneDiedMessage(this.players[mafia_result].username);
                         this.players[mafia_result].kill();
                         this.sendPrivateMessage('You pretend to be shocked at the news about ' + this.players[mafia_result].username + '.', g.ROLE.MAFIA);
                         // See if the game is over
-                        if (this.checkIfGameOver()) { return this.checkIfGameOver() };
+                        if (this.checkIfGameOver(result_msg)) { return this.checkIfGameOver(result_msg) };
                         // Move the game forward
                         this.advance();
-                        return g.someoneDiedMessage(this.players[mafia_result].username);
+                        return result_msg;
                     }
                 }
 			}
@@ -257,7 +259,7 @@ class Game {
     playerCameOnline(sessionID) {
         this.players[sessionID].cameOnline();
     }
-    checkIfGameOver() {
+    checkIfGameOver(result_msg) {
         // Check for win conditions
         let num_remaining_mafia = this.getPlayersWithRole(g.ROLE.MAFIA).length;
         let num_remaining_doctor = this.getPlayersWithRole(g.ROLE.DOCTOR).length;
@@ -267,22 +269,22 @@ class Game {
         if (num_remaining_mafia > num_remaining_players/2) {
             // Mafia wins
             this.playerkey['GAME OVER'] = 'The town has been terrorized. The mafia wins!';
-            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!' , this.playerkey]
+            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!', this.playerkey, result_msg]
         }
         if (num_remaining_mafia == num_remaining_players/2 && num_remaining_doctor == 0) {
             // Mafia wins
             this.playerkey['GAME OVER'] = 'The town has been terrorized. The mafia wins!';
-            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!' , this.playerkey]
+            return [g.GAMEOVER, 'The town has been terrorized. The mafia wins!', this.playerkey, result_msg]
         }
         if (num_remaining_mafia == 0) {
             // Town wins
             this.playerkey['GAME OVER'] = 'The town wins! The mafia has been eradicated.';
-            return [g.GAMEOVER, 'The town wins! The mafia has been eradicated.' , this.playerkey]
+            return [g.GAMEOVER, 'The town wins! The mafia has been eradicated.', this.playerkey, result_msg]
         }
         if (num_remaining_mafia == 1 && num_remaining_doctor == 1 && num_remaining_players == 2) {
             // This is the only possible draw that I can think of
             this.playerkey['GAME OVER'] = 'The game is a draw!';
-            return [g.GAMEOVER, 'The game is a draw!' , this.playerkey]
+            return [g.GAMEOVER, 'The game is a draw!' , this.playerkey, result_msg]
         }
     }
 	clientPackage(sessionID) {

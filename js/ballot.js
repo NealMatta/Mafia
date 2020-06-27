@@ -35,8 +35,8 @@ class Ballot {
 
     castVote(vote) {
         // vote is a username of who to vote for
-        // Check if the ballot is still open and make sure the vote is valid
-        if (this.isOpen && Object.keys(this.choices).includes(vote)) {
+        // Check if the ballot is still open and make sure the vote is valid and the selection isn't already picked
+        if (this.isOpen && Object.keys(this.choices).includes(vote) && this.choices[vote] == false) {
             // Unselect all choices except the newly made choice
             let target1 = this.choices;
             Object.keys(this.choices).forEach(key => { target1[key] = false });

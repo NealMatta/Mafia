@@ -63,7 +63,7 @@ p, a, span, div, li {
     background: rgba(0, 0, 0, 0.85);
 }
 
-.list-group .list-group-item {
+.list-group .list-group-item-action {
     /* Override bootstrap's white bg */
     background-color: rgba(0, 0, 0, 0);
     border: none;
@@ -77,6 +77,11 @@ p, a, span, div, li {
 }
 .list-group .active {
     background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+ul .list-group-item {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
 }
 
 /* input[type="text"] {

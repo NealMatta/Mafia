@@ -360,11 +360,15 @@ gamesocket.on('connection', socket => {
             // confirmation_status should be a Bool of whether or not the client is confirming or not
             // Confirm or unconfirm vote based on this bool
             let result = confirmation_status ? rooms[roomToJoin].confirmVote(SESSION_ID) : rooms[roomToJoin].unconfirmVote(SESSION_ID);
-            if (result) {
+            console.log(result);
+            console.log(result[0])
+            if (result[0]) {
                 // Voting is complete. Inform everyone of the results and update action boxes and private chats.
-                // result is a message to be sent to the public chat
-                rooms[roomToJoin].chatHistory.push(new Message(result));
-                gamesocket.in(roomToJoin).emit('new chat', new Message(result));
+                // result is a an array of messages to be sent to the public chat
+                for (var r = 0; r < result.length; r++) {
+                    rooms[roomToJoin].chatHistory.push(new Message(result[r]));
+                    gamesocket.in(roomToJoin).emit('new chat', new Message(result[r]));
+                }
                 for (var session_id in rooms[roomToJoin].socket_session_link) {
                     gamesocket
                         .to(rooms[roomToJoin].socket_session_link[session_id])

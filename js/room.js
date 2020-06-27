@@ -1,6 +1,7 @@
 const g = require('./global');
 const Game = require('./game');
 const Player = require('./player');
+const Message = require('./message');
 
 class Room {
 	constructor(name, isPublic, host) {
@@ -55,12 +56,12 @@ class Room {
         if (result && result[0] == g.GAMEOVER) {
             this.game = null; // End the game
             this.lastGameKey = result[2];
-            return result[1];
+            return [result[3],result[1]];
         }
 
         // If the game's not over just pass back result
         else {
-            return result;
+            return [result];
         }
     }
 
