@@ -63,19 +63,19 @@ p, a, span, div, li {
     background: rgba(0, 0, 0, 0.85);
 }
 
-.list-group .list-group-item-action {
+#game_list .list-group-item {
     /* Override bootstrap's white bg */
     background-color: rgba(0, 0, 0, 0);
     border: none;
     color: #fee6e6 !important;
 }
-.list-group .list-group-item-action:hover {
+#game_list .list-group-item-action:hover {
     background-color: rgba(0, 0, 0, 0.2);
 }
-.list-group .list-group-item-action:focus {
+#game_list .list-group-item-action:focus {
     background-color: rgba(0, 0, 0, 0.2);
 }
-.list-group .active {
+#game_list .active {
     background-color: rgba(0, 0, 0, 0.2) !important;
 }
 
